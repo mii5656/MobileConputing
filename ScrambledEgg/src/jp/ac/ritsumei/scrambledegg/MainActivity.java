@@ -9,6 +9,7 @@ import jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg.EGG_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Player;
+import jp.ac.ritsumei.scrambledegg.server.gameinfo.Room;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Room.GAME_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Team;
 
@@ -26,7 +27,6 @@ import org.json.JSONObject;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -171,7 +171,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	private long elapsedTime;
 
-
+	private boolean isLastHaveEgg = false; 
+	
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -229,6 +230,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		public void onReceive(Context context, Intent intent) {
 			String gotData =  intent.getExtras().getString(Constants.DATA);
 			Log.e("jsondata", gotData);
+			
+			GAME_STATE lastState = currentState;
+			
 			if(gotData != null){
 				//ゲーム情報の書き換え
 				parseJSON(gotData);
@@ -241,18 +245,63 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 					break;
 
 				case POSITION_SET:
+					if(lastState == GAME_STATE.TEAM_SET) {
 					/**
 					 * GPSを起動
 					 */
 					startGPSService();
 					displayPlayerMarker();
+					}
 					break;
 
 				case EGG_SET:
 					break;
 
 				case START:
-					displayTeamMarkers(myTeamId);
+
+					if(lastState == GAME_STATE.EGG_SET) {
+						displayTeamMarkers(myTeamId);
+						displayFryPanMarker();
+						displayEggMarkers();
+					}
+					
+					for(int i = 0; i < myTeam.getEggsList().size(); i++) {
+						Egg egg = myTeam.getEggsList().get(i);
+						moveMarker(EGG, egg.getEggID(), new LatLng(egg.getLatitude(), egg.getLongitude()));
+					}
+					moveMarker(FRY_PAN, 0, new LatLng(myTeam.getBaseLatitude(), myTeam.getBaseLongitude()));
+				
+					/**
+					 * チームメンバーの位置を更新
+					 */
+					for(int i = 0; i < myTeam.getPlayersList().size() ; i++) {
+						Player member = myTeam.getPlayersList().get(i);
+						if(member != myInfo) {
+							moveMarker(myTeam.getTeamID(), member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
+						}
+					}
+					
+					if(myInfo.getIsHaveEgg()) {
+						if(!isLastHaveEgg) {
+							displayEnemyMarkers(myTeam.getTeamID(), numberOfTeams);
+						}
+						/**
+						 * 敵メンバーの位置を更新
+						 */
+						for(int team = 0; team < enemyTeams.size(); team++) {
+							Team enemyTeam = enemyTeams.get(team);
+							for(int i = 0; i < enemyTeam.getPlayersList().size() ; i++) {
+								Player member = enemyTeam.getPlayersList().get(i);
+								moveMarker(myTeam.getTeamID() + TEAM_A, member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
+							}
+						}
+						isLastHaveEgg = true;
+					} else {
+						if(isLastHaveEgg) {
+							hideEnemyMarkers(myTeam.getTeamID(), numberOfTeams);
+						}
+						isLastHaveEgg = false;
+					}
 					break;
 
 				case END:
@@ -260,7 +309,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 					break;
 				}
 			}
-//			new postJSONTask().execute(makeGPSInfo());
 		}
 	}
 
@@ -483,6 +531,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		team2.addEggList(new Egg(4,35,135));
 		enemyTeams.add(team2);
 
+		numberOfTeams = 2;
+		numberOfEggs = 3;
+		
+		createAllMarkers(numberOfEggs, numberOfTeams);
 	}
 
 //	/**
@@ -613,16 +665,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			moveMarker(PLAYER, myInfo.getPlayerID(), new LatLng(location.getLatitude(), location.getLongitude()));
 
 			/**
-			 * チームメンバーの位置を更新
-			 */
-			for(int i = 0; i < myTeam.getPlayersList().size() ; i++) {
-				Player member = myTeam.getPlayersList().get(i);
-				if(member != myInfo) {
-					moveMarker(myTeam.getTeamID(), member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
-				}
-			}
-
-			/**
 			 * たまご探索中の処理
 			 */
 			if(!myInfo.getIsHaveEgg()) {
@@ -650,21 +692,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				}
 				keepEggProgressBar.setProgress(progress);
 
-			} else {
-				/**
-				 * たまご保持中の処理
-				 */
-
-				/**
-				 * 敵メンバーの位置を更新
-				 */
-				for(int team = 0; team < enemyTeams.size(); team++) {
-					Team enemyTeam = enemyTeams.get(team);
-					for(int i = 0; i < enemyTeam.getPlayersList().size() ; i++) {
-						Player member = enemyTeam.getPlayersList().get(i);
-						moveMarker(myTeam.getTeamID() + TEAM_A, member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
-					}
-				}
 			}
 
 		break;
