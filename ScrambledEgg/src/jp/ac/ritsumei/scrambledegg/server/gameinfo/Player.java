@@ -10,19 +10,17 @@ public class Player {
 	private double latitude;
 	private double longitude;
 	private int teamID;
-	
-	
-	
+	private boolean isHaveEgg = false;
+
+
+
 	public Player(String name , int pID , double latitude, double longitude) {
 		this.name = name;
 		this.playerID = pID;
 		this.latitude = latitude;
 		this.longitude = longitude;
 	}
-	
-	
-	
-	
+
 	public JSONObject getJSONObject(){
 		JSONObject result = new JSONObject();
 		try {
@@ -36,14 +34,14 @@ public class Player {
 		}
 		return result;
 	}
-	
-	
+
+
 	public int getTeamID() {
 		return teamID;
 	}
 	public void setTeamID(int teamID) {
 		this.teamID = teamID;
-	}	
+	}
 	public double getLatitude() {
 		return latitude;
 	}
@@ -67,5 +65,13 @@ public class Player {
 	}
 	public void setPlayerID(int playerID) {
 		this.playerID = playerID;
+	}
+
+	public boolean getIsHaveEgg() {
+		return isHaveEgg;
+	}
+
+	public void setIsHaveEgg(boolean isHaveEgg) {
+		this.isHaveEgg = isHaveEgg;
 	}
 }

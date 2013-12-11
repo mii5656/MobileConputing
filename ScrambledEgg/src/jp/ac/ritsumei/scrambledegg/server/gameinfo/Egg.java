@@ -5,35 +5,35 @@ import org.json.JSONObject;
 
 
 public class Egg {
- 
+
 	/**
 	 * ゲーム状態
 	 */
-	public enum EGG_STATE {STAY,CARRYING,BROKEN};
+	public enum EGG_STATE {MADE, STAY,CARRYING,BROKEN};
 
 	/**
 	 * 現在のゲーム状態
 	 */
 	private EGG_STATE currentEggState;
-	
+
 
 	private int eggID;
 	private int teamID;
 	private double latitude;
 	private double longitude;
-	
-	
+
+
 	/**
-	 * コンストラクタ 
+	 * コンストラクタ
 	 */
 	public Egg( int eggID, double latitude,double longitude) {
 		this.eggID = eggID;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		this.currentEggState = EGG_STATE.STAY;
+		this.currentEggState = EGG_STATE.MADE;
 	}
-	
-	
+
+
 	public JSONObject getJSONObject(){
 		JSONObject result = new JSONObject();
 		try {
@@ -47,8 +47,8 @@ public class Egg {
 		}
 		return result;
 	}
-	
-	
+
+
 	//以下getter setter
 	public int getEggID() {
 		return eggID;
@@ -88,7 +88,7 @@ public class Egg {
 	public void setLongitude(double longitude) {
 		this.longitude = longitude;
 	}
-	
+
 	public EGG_STATE getCurrentEggState() {
 		return currentEggState;
 	}
