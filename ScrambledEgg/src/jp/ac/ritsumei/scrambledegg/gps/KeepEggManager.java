@@ -1,5 +1,9 @@
 package jp.ac.ritsumei.scrambledegg.gps;
 
+import java.util.List;
+
+import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
+import jp.ac.ritsumei.scrambledegg.server.gameinfo.Team;
 import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -66,12 +70,32 @@ public class KeepEggManager {
 		return eggPosition;
 	}
 
-	public int getNearestEggId(Location location) {
+	public Egg getNearestEgg(Location location, List<Team> enemyTeams) {
 
-		LatLng eggPosition = null;
-		//サーバからたまごの位置リストとってくる
-		int id = 0;
-		return id;
+		Egg egg = null;
+		double distance = 0;
+		float[] results = new float[3];
+		boolean isFirst = true;
+		distance = results[0];
+		for(int team = 0; team < enemyTeams.size(); team++) {
+			List<Egg> eggList = enemyTeams.get(team).getEggsList();
+			for(int i = 0; i < eggList.size(); i++) {
+
+				Location.distanceBetween(location.getLatitude(), location.getLatitude(), eggList.get(i).getLatitude(), eggList.get(i).getLongitude(), results);
+
+				if(isFirst) {
+					egg = eggList.get(i);
+					distance = results[0];
+					isFirst = false;
+				} else {
+					if(distance > results[0]) {
+						egg = eggList.get(i);
+						distance = results[0];
+					}
+				}
+			}
+		}
+		return egg;
 	}
 
 

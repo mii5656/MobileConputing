@@ -63,10 +63,14 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     private boolean isCanSetObject = false;
 
     /**
-     * たまご、フライパンを設置したか否か
+     * たまごを設置した数
      */
-    private boolean isSetEgg = false;
-    private boolean isSetFryPan = false;
+    private int countSetEggs = 0;
+    
+    /**
+     * たまごの一人あたりの設置数
+     */
+    private final int MAX_SET_EGGS= 2;
 
     /**
      * たまごをが取得可能な状態化管理
@@ -85,27 +89,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     private ProgressBar keepEggProgressBar;
     private int progress = 0;
 
-    /**
-     * プレイヤーがリーダーかどうか
-     */
-    private boolean isLeader = false;
-
-    /**
+   /**
      * チームの数
      */
     private int numberOfTeams;
-
-    /**
-     * チーム、相手のメンバー数
-     */
-    private int[] numberOfMembers;
-
-    /**
-     * プレイヤーのID
-     */
-    private int playerId = 0;
-
-    private int myTeamId = 0;
 
     /**
      * プレイヤーの最新の位置情報
@@ -113,7 +100,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     private LatLng myLocation;
 
     /**
-     * 設置する卵の数
+     * 一チームあたりのたまごの設置数
      */
     private int numberOfEggs;
 
@@ -260,7 +247,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				case START:
 
 					if(lastState == GAME_STATE.EGG_SET) {
-						displayTeamMarkers(myTeamId);
+						displayTeamMarkers(myTeam.getTeamID());
 						displayFryPanMarker();
 						displayEggMarkers();
 					}
@@ -537,51 +524,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		createAllMarkers(numberOfEggs, numberOfTeams);
 	}
 
-//	/**
-//	 * 卵を保持
-//	 */
-//	public void startHoldEgg() {
-//		gameStatus = 3;
-//
-//		displayEnemyMarkers(myTeamId, numberOfTeams);
-//	}
-//
-//	/**
-//	 * 卵を保持した時の処理
-//	 * @param eggId
-//	 */
-//	public void pickEgg(int eggId) {
-//		//卵を保持したとサーバに送信
-//		myHoldingEggId = eggId;
-//		startHoldEgg();
-//	}
-//
-//	/**
-//	 * 卵をフライパンに入れる
-//	 */
-//	public void setInFryPan() {
-//		numberOfEggsInFryPan++;
-//		//サーバに卵の数を更新
-//
-//		if(numberOfEggsInFryPan == numberOfEggs) {
-//			gameStatus = 4;
-//			//notifyWining(); //サーバに勝利を報告
-//		} else {
-//			gameStatus = 2;
-//			hideEnemyMarkers(myTeamId, numberOfTeams);
-//			myHoldingEggId = -1;
-//		}
-//	}
-//
-//	/**
-//	 * 卵を割られる
-//	 */
-//	public void brokenHoldingEgg() {
-//		gameStatus = 2;
-//		hideEnemyMarkers(myTeamId, numberOfTeams);
-//		myHoldingEggId = -1;
-//	}
-
 	/**
 	 * 勝利をサーバに通知する
 	 */
@@ -668,23 +610,22 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * たまご探索中の処理
 			 */
 			if(!myInfo.getIsHaveEgg()) {
-				nearestEggId = myKeepEggManager.getNearestEggId(location);
-				LatLng eggPosition = myKeepEggManager.getEggPosition(nearestEggId);
+				Egg egg = myKeepEggManager.getNearestEgg(location, enemyTeams);
 
 				float[] result = new float[3];
-				Location.distanceBetween(location.getLatitude(), location.getLongitude(), eggPosition.latitude, eggPosition.longitude, result);
+				Location.distanceBetween(location.getLatitude(), location.getLongitude(), egg.getLatitude(), egg.getLongitude(), result);
 
 				String directionText = getDirectionString(result[1]);
 
 				distanceTextView.setText(directionText);
 				directionTextView.setText(result[0] + "m");
 
-				myKeepEggManager.progressKeepEggBar(location, eggPosition);
+				myKeepEggManager.progressKeepEggBar(location, new LatLng(egg.getLatitude(), egg.getLongitude()));
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
 					isCanKeepEgg = true;
 					keepEggTextView.setText("YOU CAN GET AN EGG");
 				} else if((progress = myKeepEggManager.getProgress()) == 0) {
-					isCanKeepEgg = true;
+					isCanKeepEgg = false;
 					keepEggTextView.setText("YOU ARE NOT NEAR EGGS");
 				}else{
 					isCanKeepEgg = false;
@@ -695,6 +636,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			}
 
 		break;
+		
 		/**
 		 * 結果画面
 		 */
@@ -751,9 +693,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	public void onClick(View v) {
 		if (v == setObjectButton) {
 			if(currentState == GAME_STATE.EGG_SET) {
-				int eggId = countStayingEgg();
-				new postJSONTask().execute(makeEggLocationInfo(eggId, myLocation));
-				setMarker(EGG, eggId, myLocation);
+				if(countSetEggs + 1 == MAX_SET_EGGS) {
+					int eggId = countStayingEgg();
+					new postJSONTask().execute(makeEggLocationInfo(eggId, myLocation));
+					setMarker(EGG, eggId, myLocation);
+					countSetEggs++;
+				}
+				
 			} else if (currentState == GAME_STATE.POSITION_SET) {
 				new postJSONTask().execute(makeFryPanLocationInfo(myLocation));
 				setMarker(FRY_PAN, 0, myLocation);
