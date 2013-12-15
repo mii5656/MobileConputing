@@ -5,14 +5,14 @@
     android:orientation="vertical" >
 
     <TextView
-        android:id="@+id/keepEggText"
+        android:id="@+id/keepEggText2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="YOU ARE NOT NEAR EGGS"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <ProgressBar
-        android:id="@+id/keepEggProgressBar"
+        android:id="@+id/keepEggProgressBar2"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

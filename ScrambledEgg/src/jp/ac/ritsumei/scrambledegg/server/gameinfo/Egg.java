@@ -9,7 +9,7 @@ public class Egg {
 	/**
 	 * ゲーム状態
 	 */
-	public enum EGG_STATE {MADE, STAY,CARRYING,BROKEN};
+	public enum EGG_STATE {MADE,STAY,CARRYING,BROKEN};
 
 	/**
 	 * 現在のゲーム状態

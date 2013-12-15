@@ -20,12 +20,11 @@ public class SettingtObjectManager {
 	 * @return
 	 */
 	public boolean chaeckGPSAccuracy(Location location, double accuracyThresh) {
-		if(location.getAccuracy() < accuracyThresh) {
+		if(location.getAccuracy() <= accuracyThresh) {
 			accuracyCount++;
 			if(accuracyCount >= 3) {
 				return true;
 			} else {
-				accuracyCount = 0;
 				return false;
 			}
 		} else {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager;
+import jp.ac.ritsumei.scrambledegg.room.MakeRoomActivity;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg.EGG_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Player;
@@ -41,7 +42,7 @@ import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener, OnClickListener{
+public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener{
 
 	/**
 	 * 画面下部のフリッパー
@@ -63,7 +64,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
      * たまごを設置した数
      */
     private int countSetEggs = 0;
-    
+
     /**
      * たまごの一人あたりの設置数
      */
@@ -106,9 +107,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
      */
     private int numberOfEggsInFryPan;
 
-    
+
     private ExtendApplication app;
-    
+
     /**
      * 最も近い卵のID
      */
@@ -118,7 +119,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     private TextView keepEggTextView;
     private TextView directionTextView;
     private TextView distanceTextView;
-    private TextView logTextView;
+    private TextView accuracyTextView;
+    private TextView accuracyTextView2;
+    private TextView stateTextView;
 
     Button setObjectButton;
 
@@ -159,8 +162,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	private long elapsedTime;
 
-	private boolean isLastHaveEgg = false; 
-	
+	private boolean isLastHaveEgg = false;
+
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -175,6 +178,25 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
         mySettingObjectManager = new jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager();
         setObjectButton = (Button)findViewById(R.id.setObjectButton);
+        setObjectButton.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if (v.getId() == R.id.setObjectButton) {
+					if(currentState == GAME_STATE.EGG_SET) {
+						if(countSetEggs < MAX_SET_EGGS) {
+							int eggId = countStayingEgg();
+							moveMarker(EGG, eggId, myLocation);
+							new postJSONTask().execute(makeEggLocationInfo(myTeam.getEggsList().get(eggId).getEggID(), myLocation));
+							countSetEggs++;
+						}
+
+					} else if (currentState == GAME_STATE.POSITION_SET) {
+						new postJSONTask().execute(makeFryPanLocationInfo(myLocation));
+						Log.v("Marker","marker---" + myLocation.latitude + "," + myLocation.longitude);
+						moveMarker(FRY_PAN, 0, myLocation);
+					}
+				}
+			}
+		});
         gpsAccuracyTextView = (TextView)findViewById(R.id.gpsAccuracyText);
 
         myKeepEggManager = new jp.ac.ritsumei.scrambledegg.gps.KeepEggManager();
@@ -185,10 +207,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
         directionTextView = (TextView)findViewById(R.id.direction2);
         distanceTextView = (TextView)findViewById(R.id.distance2);
 
-        logTextView = (TextView)findViewById(R.id.textView5);
+        accuracyTextView = (TextView)findViewById(R.id.textView);
+        stateTextView = (TextView)findViewById(R.id.textView2);
+        accuracyTextView2 = (TextView)findViewById(R.id.textView3);
         
+
         app = (ExtendApplication)getApplication();
-        
+
         makeRoom();
 
 	}
@@ -209,6 +234,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			unregisterReceiver(receiver);
 		}
 		stopService(new Intent(getApplicationContext(),GameInfoGetterService.class));
+		stopGPSService();
 	}
 
 
@@ -220,11 +246,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
+
+			GAME_STATE lastState = currentState;
+
 			String gotData =  intent.getExtras().getString(Constants.DATA);
 			Log.e("jsondata", gotData);
-			
-			GAME_STATE lastState = currentState;
-			
+
+
 			if(gotData != null){
 				//ゲーム情報の書き換え
 				parseJSON(gotData);
@@ -237,42 +265,53 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 					break;
 
 				case POSITION_SET:
-					if(lastState == GAME_STATE.TEAM_SET) {
-					/**
-					 * GPSを起動
-					 */
-					startGPSService();
-					displayPlayerMarker();
+
+					if(lastState != GAME_STATE.POSITION_SET) {
+						/**
+						 * GPSを起動
+						 */
+						startGPSService();
+						//displayPlayerMarker();
+						setObjectButton.setText("SET FRY PAN");
+						setObjectButton.setClickable(false);
 					}
 					break;
 
 				case EGG_SET:
+
+					if(lastState != GAME_STATE.EGG_SET) {
+						setObjectButton.setText("SET EGG");
+						setObjectButton.setClickable(false);
+					}
 					break;
 
 				case START:
 
-					if(lastState == GAME_STATE.EGG_SET) {
-						displayTeamMarkers(myTeam.getTeamID());
-						displayFryPanMarker();
-						displayEggMarkers();
+					if(lastState != GAME_STATE.START) {
+						viewFlipper.showNext();
+//						displayTeamMarkers(myTeam.getTeamID());
+//						displayFryPanMarker();
+//						displayEggMarkers();
 					}
-					
+
 					for(int i = 0; i < myTeam.getEggsList().size(); i++) {
 						Egg egg = myTeam.getEggsList().get(i);
 						moveMarker(EGG, egg.getEggID(), new LatLng(egg.getLatitude(), egg.getLongitude()));
 					}
 					moveMarker(FRY_PAN, 0, new LatLng(myTeam.getBaseLatitude(), myTeam.getBaseLongitude()));
-				
+
 					/**
 					 * チームメンバーの位置を更新
 					 */
 					for(int i = 0; i < myTeam.getPlayersList().size() ; i++) {
 						Player member = myTeam.getPlayersList().get(i);
 						if(member != myInfo) {
-							moveMarker(myTeam.getTeamID(), member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
+							moveMarker(myTeam.getTeamID(), i, new LatLng(member.getLatitude(), member.getLongitude()));
+						} else {
+							i--;
 						}
 					}
-					
+
 					if(myInfo.getIsHaveEgg()) {
 						if(!isLastHaveEgg) {
 							displayEnemyMarkers(myTeam.getTeamID(), numberOfTeams);
@@ -308,14 +347,14 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	public void parseJSON(String JSONstring){
 		try {
-			
+
 			//room情報
 			JSONObject object = new JSONObject(JSONstring);
 			currentState = GAME_STATE.valueOf( object.getString("GameState"))  ;
 			elapsedTime = object.getLong("time");
 
-			logTextView.setText(""+currentState);
-			
+			stateTextView.setText(""+currentState);
+
 			//team情報
 			JSONArray teamArray = object.getJSONArray("teams");
 			for(int i = 0;i < teamArray.length();i++){
@@ -509,7 +548,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		 * Roomの中に、Teamがあって、Teamの中にPlayerのリストとEggのリストがある
 		 */
 		myInfo = new Player("player"+app.getPlayerID(), 1, 35, 135 );
-		
+
 		enemyTeams = new ArrayList<Team>();
 		myTeam = new Team("team"+app.getTeamID(),app.getTeamID());
 //
@@ -528,7 +567,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		numberOfTeams = app.getTeamNum();
 		numberOfEggs = app.getPlayerNum();
-		
+
 		createAllMarkers(numberOfEggs, numberOfTeams);
 	}
 
@@ -559,8 +598,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	@Override
 	public void onLocationChanged(Location location) {
 		super.onLocationChanged(location);
-		myLocation = new LatLng(location.getLatitude(), location.getLatitude());
+		myLocation = new LatLng(location.getLatitude(), location.getLongitude());
 
+		accuracyTextView.setText("" + location.getAccuracy());
+		accuracyTextView2.setText("" + location.getAccuracy());
 		new postJSONTask().execute(makeMyLocationInfo(myLocation));
 
 		switch(currentState) {
@@ -574,16 +615,16 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * フライパン設置時の処理
 			 * フライパン設置可能か判定
 			 */
-		case POSITION_SET:	
+		case POSITION_SET:
 			if((isCanSetObject = mySettingObjectManager.chaeckGPSAccuracy(location, SettingtObjectManager.ACCURACY_THRESH))){
-				setObjectButton.setText("GPS:OK");
+				gpsAccuracyTextView.setText("GPS:OK");
 				setObjectButton.setClickable(true);
 			} else {
-				setObjectButton.setText("GPS:NG");
+				gpsAccuracyTextView.setText("GPS:NG");
 				setObjectButton.setClickable(false);
 			}
 
-			moveMarker(PLAYER, myInfo.getPlayerID(), new LatLng(location.getLatitude(), location.getLongitude()));
+			moveMarker(PLAYER, 0, new LatLng(location.getLatitude(), location.getLongitude()));
 
 			break;
 
@@ -593,14 +634,14 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 */
 		case EGG_SET:
 			if((isCanSetObject = mySettingObjectManager.chaeckGPSAccuracy(location, SettingtObjectManager.ACCURACY_THRESH))){
-				setObjectButton.setText("GPS:OK");
+				gpsAccuracyTextView.setText("GPS:OK");
 				setObjectButton.setClickable(true);
 			} else {
-				setObjectButton.setText("GPS:NG");
+				gpsAccuracyTextView.setText("GPS:NG");
 				setObjectButton.setClickable(false);
 			}
 
-			moveMarker(PLAYER, myInfo.getPlayerID(), new LatLng(location.getLatitude(), location.getLongitude()));
+			moveMarker(PLAYER, 0, new LatLng(location.getLatitude(), location.getLongitude()));
 
 			break;
 
@@ -612,7 +653,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		 */
 		case START:
 
-			moveMarker(PLAYER, myInfo.getPlayerID(), new LatLng(location.getLatitude(), location.getLongitude()));
+			moveMarker(PLAYER, 0, new LatLng(location.getLatitude(), location.getLongitude()));
 
 			/**
 			 * たまご探索中の処理
@@ -644,7 +685,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			}
 
 		break;
-		
+
 		/**
 		 * 結果画面
 		 */
@@ -652,6 +693,18 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		break;
 		}
 
+	}
+
+	public void keepEgg() {
+		viewFlipper.showNext();
+	}
+
+	public void breakEgg() {
+		viewFlipper.showPrevious();
+	}
+
+	public void goalEgg() {
+		viewFlipper.showPrevious();
 	}
 
 	public String getDirectionString(double direction) {
@@ -671,50 +724,53 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 
-		/**
-		 * 画面下部のフリップ動作
-		 */
-		switch(event.getAction()){
-
-		case MotionEvent.ACTION_DOWN:
-			// タッチ場所を取得
-			posX = event.getX();
-			break;
-		case MotionEvent.ACTION_UP:
-			if(posX > event.getX()){
-
-
-				// 次ページへ移動
-				viewFlipper.showNext();
-			}else if(posX < event.getX()){
-
-				// 前ページへ移動
-				viewFlipper.showPrevious();
-			}
-		default:
-			break;
-		}
+//		/**
+//		 * 画面下部のフリップ動作
+//		 */
+//		switch(event.getAction()){
+//
+//		case MotionEvent.ACTION_DOWN:
+//			// タッチ場所を取得
+//			posX = event.getX();
+//			break;
+//		case MotionEvent.ACTION_UP:
+//			if(posX > event.getX()){
+//
+//
+//				// 次ページへ移動
+//				viewFlipper.showNext();
+//			}else if(posX < event.getX()){
+//
+//				// 前ページへ移動
+//				viewFlipper.showPrevious();
+//			}
+//		default:
+//			break;
+//		}
 		return true;
 	}
 
-	@Override
-	public void onClick(View v) {
-		if (v == setObjectButton) {
-			if(currentState == GAME_STATE.EGG_SET) {
-				if(countSetEggs + 1 == MAX_SET_EGGS) {
-					int eggId = countStayingEgg();
-					new postJSONTask().execute(makeEggLocationInfo(eggId, myLocation));
-					setMarker(EGG, eggId, myLocation);
-					countSetEggs++;
-				}
-				
-			} else if (currentState == GAME_STATE.POSITION_SET) {
-				new postJSONTask().execute(makeFryPanLocationInfo(myLocation));
-				setMarker(FRY_PAN, 0, myLocation);
-			}
-		}
-
-	}
+//	@Override
+//	public void onClick(View v) {
+//		if (v == setObjectButton) {
+//			Log.v("TEST","tap");
+//			System.out.println("tap");
+//			if(currentState == GAME_STATE.EGG_SET) {
+//				if(countSetEggs < MAX_SET_EGGS) {
+//					int eggId = countStayingEgg();
+//					new postJSONTask().execute(makeEggLocationInfo(eggId, myLocation));
+//					moveMarker(EGG, eggId, myLocation);
+//					countSetEggs++;
+//				}
+//
+//			} else if (currentState == GAME_STATE.POSITION_SET) {
+//				new postJSONTask().execute(makeFryPanLocationInfo(myLocation));
+//				Log.v("TEST","marker");
+//				System.out.println("marker");
+//				moveMarker(FRY_PAN, 0, myLocation);
+//			}
+//		}
+//	}
 
 	/**
 	 * 設置されているたまごの数を数える
@@ -741,8 +797,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		this.enemyTeams = enemyTeams;
 	}
 
-
-
 	public GAME_STATE getCurrentState() {
 		return currentState;
 	}
@@ -766,9 +820,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return roomID;
 	}
 
-
-
 	public void setRoomID(int roomID) {
 		this.roomID = roomID;
 	}
+
 }

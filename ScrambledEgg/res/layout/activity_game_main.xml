@@ -23,19 +23,16 @@
         android:layout_weight="2" >
 
         <include
+            android:id="@+id/setting_object"
+            layout="@layout/include_setting_object" />
+
+        <include
             android:id="@+id/status"
             layout="@layout/include_status" />
 
         <include
-            android:id="@+id/progress_bar"
-            layout="@layout/include_progress_bar" />
-
-        <include
             android:id="@+id/keep_egg"
             layout="@layout/include_keep_egg" />
-        <include
-            android:id="@+id/setting_object"
-            layout="@layout/include_setting_object" />
     </ViewFlipper>
 
 </LinearLayout>

@@ -298,33 +298,37 @@ public class MapActivity extends FragmentActivity implements LocationListener{
 	 * @param point
 	 */
 	protected void moveMarker(int kind, int id, LatLng point) {
-		Marker marker = null;
+		int index = -1;
 		for(int i = 0; i < markerList.size(); i++) {
 			if (markerList.get(i).getKind() == kind && markerList.get(i).getId() == id) {
-				marker = markerList.get(i).getMarker();
+				index = i;
 				break;
 			}
 		}
 
-		if(marker != null) {
-			marker.remove();
-
-			marker.setPosition(point);
+		if(kind != PLAYER) {
+			Log.v("Marker", "kind:" + kind + ", id:" + id + ", index:" + index);
+			Log.v("Maker", "" + point.latitude + ", " + point.longitude);
+		}
+		if(index != -1) {
+			markerList.get(index).getMarker().remove();
+			markerList.get(index).setMarker((map.addMarker(new MarkerOptions().position(point).icon(setIcon(kind)))));
+			markerList.get(index).getMarker().setVisible(true);
 		}
 	}
 
 	protected void setMarker(int kind, int id, LatLng point) {
-		Marker marker = null;
+		int index = -1;
 		for(int i = 0; i < markerList.size(); i++) {
 			if (markerList.get(i).getKind() == kind && markerList.get(i).getId() == id) {
-				marker = markerList.get(i).getMarker();
+				index = i;
 				break;
 			}
 		}
 
-		if(marker != null) {
-			marker.setVisible(true);
-			marker.setPosition(point);
+		if(index != -1) {
+			markerList.get(index).getMarker().setVisible(true);
+			markerList.get(index).getMarker().setPosition(point);
 		}
 	}
 }

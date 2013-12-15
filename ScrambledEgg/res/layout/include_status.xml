@@ -50,7 +50,7 @@
         android:layout_height="wrap_content" >
 
         <TextView
-            android:id="@+id/logText"
+            android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="LOG"
@@ -66,46 +66,17 @@
 
     </TableRow>
 
-    <TableRow
-        android:id="@+id/tableRow4"
+        <TextView
+        android:id="@+id/keepEggText"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:text="YOU ARE NOT NEAR EGGS"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
-        <TextView
-            android:id="@+id/textView1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="                         "
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Egg5 is broken"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    </TableRow>
-
-    <TableRow
-        android:id="@+id/tableRow5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
-
-        <TextView
-            android:id="@+id/textView4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=""
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <TextView
-            android:id="@+id/textView5"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Player3 has carried Egg1\n in a fry pan of TeamA"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    </TableRow>
+    <ProgressBar
+        android:id="@+id/keepEggProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </TableLayout>

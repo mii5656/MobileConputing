@@ -48,11 +48,11 @@ public class KeepEggManager {
 		} else {
 			if(isNearEgg(myPosition, eggPosition, KEEP_DISTANCE_THRESH)) {
 				if(location.getAccuracy() == 0) {
-				}else if(location.getAccuracy() < 15) {
+				}else if(location.getAccuracy() <= 15) {
 					progress += 20;
-				} else if(location.getAccuracy() < 30) {
+				} else if(location.getAccuracy() <= 30) {
 					progress += 10;
-				} else if(location.getAccuracy() < 50) {
+				} else if(location.getAccuracy() <= 50) {
 					progress += 5;
 				}
 			} else {
