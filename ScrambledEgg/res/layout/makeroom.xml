@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#000000"
+    android:gravity="center_horizontal"
+    android:stretchColumns="1" >
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.68"
+        android:src="@drawable/making" />
+
+    <TableRow>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="新規作成するルームのplayer数を入力:  "
+            android:textColor="#ffffff" />
+
+        <Spinner
+            android:id="@+id/spinnerPlayer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#f0e68c"
+          />
+
+    </TableRow>
+
+    <TableRow>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="新規作成するルームのチーム数を入力:   "
+            android:textColor="#ffffff" />
+
+        <Spinner
+            android:id="@+id/spinnerTeam"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+        	android:background="#f0e68c"
+             />
+
+    </TableRow>
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_span="2"
+        android:minWidth="@dimen/activity_horizontal_margin"
+        android:text="新規ルーム登録"
+        android:textColor="#ffffff" />
+
+</TableLayout>
