@@ -3,13 +3,10 @@ package jp.ac.ritsumei.scrambledegg;
 import java.util.ArrayList;
 import java.util.List;
 
-
-import jp.ac.ritsumei.scrambledegg.R;
 import jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg.EGG_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Player;
-import jp.ac.ritsumei.scrambledegg.server.gameinfo.Room;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Room.GAME_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Team;
 
@@ -24,8 +21,6 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.google.android.gms.maps.model.LatLng;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -43,6 +38,8 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
+
+import com.google.android.gms.maps.model.LatLng;
 
 public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener, OnClickListener{
 
@@ -109,6 +106,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
      */
     private int numberOfEggsInFryPan;
 
+    
+    private ExtendApplication app;
+    
     /**
      * 最も近い卵のID
      */
@@ -118,6 +118,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     private TextView keepEggTextView;
     private TextView directionTextView;
     private TextView distanceTextView;
+    private TextView logTextView;
 
     Button setObjectButton;
 
@@ -184,6 +185,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
         directionTextView = (TextView)findViewById(R.id.direction2);
         distanceTextView = (TextView)findViewById(R.id.distance2);
 
+        logTextView = (TextView)findViewById(R.id.textView5);
+        
+        app = (ExtendApplication)getApplication();
+        
         makeRoom();
 
 	}
@@ -303,11 +308,14 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	public void parseJSON(String JSONstring){
 		try {
+			
 			//room情報
 			JSONObject object = new JSONObject(JSONstring);
 			currentState = GAME_STATE.valueOf( object.getString("GameState"))  ;
 			elapsedTime = object.getLong("time");
 
+			logTextView.setText(""+currentState);
+			
 			//team情報
 			JSONArray teamArray = object.getJSONArray("teams");
 			for(int i = 0;i < teamArray.length();i++){
@@ -445,7 +453,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return info;
 	}
 
-
+//TODO サーバー
 	/**
 	 * サーバに送るたまご情報をJSONにする
 	 * @return
@@ -469,7 +477,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return info;
 	}
 
-
+//TODO サーバー
 	/**
 	 * サーバに送るフライパン情報をJSONにする
 	 * @return
@@ -500,26 +508,26 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		/**
 		 * Roomの中に、Teamがあって、Teamの中にPlayerのリストとEggのリストがある
 		 */
-		myInfo = new Player("p1", 1, 35, 135 );
+		myInfo = new Player("player"+app.getPlayerID(), 1, 35, 135 );
+		
 		enemyTeams = new ArrayList<Team>();
+		myTeam = new Team("team"+app.getTeamID(),app.getTeamID());
+//
+//		myTeam.addPlayerList(myInfo);
+//		myTeam.addPlayerList(new Player("p2", 2, 35,135));
+//		myTeam.addEggList(new Egg(1,35,135));
+//		myTeam.addEggList(new Egg(2,35,135));
+//
+//
+//		Team team2 = new Team("team1",2);
+//		team2.addPlayerList(new Player("p3",3,35,135));
+//		team2.addPlayerList(new Player("p4", 4, 35,135));
+//		team2.addEggList(new Egg(3,35,135));
+//		team2.addEggList(new Egg(4,35,135));
+//		enemyTeams.add(team2);
 
-		myTeam = new Team("team1",1);
-
-		myTeam.addPlayerList(myInfo);
-		myTeam.addPlayerList(new Player("p2", 2, 35,135));
-		myTeam.addEggList(new Egg(1,35,135));
-		myTeam.addEggList(new Egg(2,35,135));
-
-
-		Team team2 = new Team("team1",2);
-		team2.addPlayerList(new Player("p3",3,35,135));
-		team2.addPlayerList(new Player("p4", 4, 35,135));
-		team2.addEggList(new Egg(3,35,135));
-		team2.addEggList(new Egg(4,35,135));
-		enemyTeams.add(team2);
-
-		numberOfTeams = 2;
-		numberOfEggs = 3;
+		numberOfTeams = app.getTeamNum();
+		numberOfEggs = app.getPlayerNum();
 		
 		createAllMarkers(numberOfEggs, numberOfTeams);
 	}
@@ -566,7 +574,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * フライパン設置時の処理
 			 * フライパン設置可能か判定
 			 */
-		case POSITION_SET:
+		case POSITION_SET:	
 			if((isCanSetObject = mySettingObjectManager.chaeckGPSAccuracy(location, SettingtObjectManager.ACCURACY_THRESH))){
 				setObjectButton.setText("GPS:OK");
 				setObjectButton.setClickable(true);

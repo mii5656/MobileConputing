@@ -29,6 +29,7 @@ public class GameInfoGetterService extends Service {
 	
 	private int roomID = 1;
 	
+	private ExtendApplication app;
 	@Override
 	public IBinder onBind(Intent arg0) {
 		return null;
@@ -44,6 +45,9 @@ public class GameInfoGetterService extends Service {
 		infoGetTimer.schedule(task, 1000, 5000);//5秒サイクルで実行	
 		
 		httpClient  = new DefaultHttpClient();	
+		
+		app = (ExtendApplication)getApplication();
+		roomID = app.roomID;
 	}
 
 	@Override
