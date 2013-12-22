@@ -27,6 +27,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -36,13 +40,14 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener{
+public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener, SensorEventListener{
 
 	/**
 	 * 画面下部のフリッパー
@@ -163,6 +168,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	private long elapsedTime;
 
 	private boolean isLastHaveEgg = false;
+	
+	/**
+	 * センサー関係
+	 */
+	private SensorManager sensorManager;
+	
+	private ImageView keepEggImg;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -210,6 +222,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
         accuracyTextView = (TextView)findViewById(R.id.textView);
         stateTextView = (TextView)findViewById(R.id.textView2);
         accuracyTextView2 = (TextView)findViewById(R.id.textView3);
+        
+        keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
+        
+        initSensor();
         
 
         app = (ExtendApplication)getApplication();
@@ -538,6 +554,32 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		}
 		return info;
 	}
+	
+//TODO サーバー
+	/**
+	 * サーバに送るたまご保持情報をJSONにする
+	 * @return
+	 */
+	public JSONObject makeEggInfo(String state){
+		JSONObject info = new JSONObject();
+
+		try {
+			/**
+			 * state
+			 *  ・KEEP
+			 *  ・BREAK
+			 *  ・GET
+			 */
+			//先頭にデータの情報をつける
+			info.put("DataType", "EGG"+state);
+			//更新したいデータの位置
+			info.put("eggID", nearestEggId);
+			if(state.equals("GET")) info.put("teamID", myTeam.getTeamID());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return info;
+	}
 
 	/**
 	 * チーム分け
@@ -673,6 +715,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
 					isCanKeepEgg = true;
 					keepEggTextView.setText("YOU CAN GET AN EGG");
+					registerAccelerometer();
 				} else if((progress = myKeepEggManager.getProgress()) == 0) {
 					isCanKeepEgg = false;
 					keepEggTextView.setText("YOU ARE NOT NEAR EGGS");
@@ -696,15 +739,27 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	}
 
 	public void keepEgg() {
+		myInfo.setIsHaveEgg(true);
+		isCanKeepEgg = false;
 		viewFlipper.showNext();
+		//サーバにたまご保持通知
+		new postJSONTask().execute(makeEggInfo("KEEP"));
 	}
 
 	public void breakEgg() {
+		myInfo.setIsHaveEgg(false);
 		viewFlipper.showPrevious();
+		unregisterAccelerometer();
+		//サーバにたまご損失通知
+		new postJSONTask().execute(makeEggInfo("BREAK"));
 	}
 
 	public void goalEgg() {
+		myInfo.setIsHaveEgg(false);
 		viewFlipper.showPrevious();
+		unregisterAccelerometer();
+		//サーバにたまご獲得通知
+		new postJSONTask().execute(makeEggInfo("GET"));
 	}
 
 	public String getDirectionString(double direction) {
@@ -822,6 +877,62 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	public void setRoomID(int roomID) {
 		this.roomID = roomID;
+	}
+	
+	/**
+	 * たまご獲得動作検出
+	 */
+	private void checkMotion(float z){
+		if(z < -5) keepEgg();
+	}
+	
+	/**
+	 * たまご画像位置更新
+	 */
+	private void replaceEggImg(float x, float y){
+		keepEggImg.layout(keepEggImg.getLeft()-(int)x*5, keepEggImg.getTop()+(int)y*5, keepEggImg.getWidth(), keepEggImg.getHeight());
+	}
+	
+	/**
+	 * センサー初期化
+	 */
+	protected void initSensor(){
+		sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+	}
+	
+	/**
+	 * 加速度センサー登録
+	 */
+	protected void registerAccelerometer(){
+		List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+		if(sensors.size() > 0){
+			Sensor s = sensors.get(0);
+			sensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+		}
+	}
+	
+	/**
+	 * センサーイベントハンドラ（精度変化）
+	 */
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+	/**
+	 * センサーイベントハンドラ（値変化）
+	 */
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+			if(isCanKeepEgg) checkMotion(event.values[2]);
+			else if(myInfo.getIsHaveEgg()) replaceEggImg(event.values[0],event.values[1]);
+		}
+	}
+	
+	/**
+	 * 加速度センサー登録解除
+	 */
+	protected void unregisterAccelerometer(){
+		sensorManager.unregisterListener(this);
 	}
 
 }

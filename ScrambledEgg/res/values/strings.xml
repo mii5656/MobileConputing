@@ -4,5 +4,6 @@
     <string name="app_name">ScrambledEgg</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">test</string>
+    <string name="egg_desc">たまご画像</string>
 
 </resources>
