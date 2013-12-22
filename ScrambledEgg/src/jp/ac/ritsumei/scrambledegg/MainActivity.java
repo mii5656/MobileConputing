@@ -27,6 +27,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -42,7 +46,7 @@ import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener{
+public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener, SensorEventListener{
 
 	/**
 	 * 画面下部のフリッパー
@@ -163,6 +167,11 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	private long elapsedTime;
 
 	private boolean isLastHaveEgg = false;
+	
+	/**
+	 * センサー関係
+	 */
+	private SensorManager sensorManager;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -210,6 +219,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
         accuracyTextView = (TextView)findViewById(R.id.textView);
         stateTextView = (TextView)findViewById(R.id.textView2);
         accuracyTextView2 = (TextView)findViewById(R.id.textView3);
+        
+        
+        initSensor();
         
 
         app = (ExtendApplication)getApplication();
@@ -673,6 +685,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
 					isCanKeepEgg = true;
 					keepEggTextView.setText("YOU CAN GET AN EGG");
+					registerAccelerometer();
 				} else if((progress = myKeepEggManager.getProgress()) == 0) {
 					isCanKeepEgg = false;
 					keepEggTextView.setText("YOU ARE NOT NEAR EGGS");
@@ -697,14 +710,19 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	public void keepEgg() {
 		viewFlipper.showNext();
+		//TODO サーバにたまご保持通知
 	}
 
 	public void breakEgg() {
 		viewFlipper.showPrevious();
+		unregisterAccelerometer();
+		//TODO サーバにたまご損失通知
 	}
 
 	public void goalEgg() {
 		viewFlipper.showPrevious();
+		unregisterAccelerometer();
+		//TODO サーバにたまご獲得通知
 	}
 
 	public String getDirectionString(double direction) {
@@ -822,6 +840,54 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	public void setRoomID(int roomID) {
 		this.roomID = roomID;
+	}
+	
+	/**
+	 * たまご獲得動作検出
+	 */
+	private void checkMotion(float z){
+		if(z < -5) keepEgg();
+	}
+	
+	/**
+	 * センサー初期化
+	 */
+	protected void initSensor(){
+		sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+	}
+	
+	/**
+	 * 加速度センサー登録
+	 */
+	protected void registerAccelerometer(){
+		List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+		if(sensors.size() > 0){
+			Sensor s = sensors.get(0);
+			sensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+		}
+	}
+	
+	/**
+	 * センサーイベントハンドラ（精度変化）
+	 */
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+	/**
+	 * センサーイベントハンドラ（値変化）
+	 */
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+			if(isCanKeepEgg) checkMotion(event.values[2]);
+		}
+	}
+	
+	/**
+	 * 加速度センサー登録解除
+	 */
+	protected void unregisterAccelerometer(){
+		sensorManager.unregisterListener(this);
 	}
 
 }
