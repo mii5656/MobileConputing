@@ -571,7 +571,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 *  ・GET
 			 */
 			//先頭にデータの情報をつける
-			info.put("DataType", "EGG"+state);
+			info.put("DataType", "EGG_"+state);
 			//更新したいデータの位置
 			info.put("eggID", nearestEggId);
 			if(state.equals("GET")) info.put("teamID", myTeam.getTeamID());
@@ -778,6 +778,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
+		
+		//たまごを保持している状態で画面がタッチされたらたまごを壊す
+		if(event.getAction() == MotionEvent.ACTION_DOWN && myInfo.getIsHaveEgg()) breakEgg();
 
 //		/**
 //		 * 画面下部のフリップ動作
