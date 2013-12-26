@@ -118,7 +118,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     /**
      * 最も近い卵のID
      */
-    private int nearestEggId = 0;
+    private Egg nearestEgg ;
 
     private TextView gpsAccuracyTextView;
     private TextView keepEggTextView;
@@ -573,8 +573,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			//先頭にデータの情報をつける
 			info.put("DataType", "EGG"+state);
 			//更新したいデータの位置
-			info.put("eggID", nearestEggId);
-			if(state.equals("GET")) info.put("teamID", myTeam.getTeamID());
+			info.put("roomID", roomID);
+			info.put("eggID", nearestEgg.getEggID());
+			info.put("teamID", myTeam.getTeamID());
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -701,17 +702,17 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * たまご探索中の処理
 			 */
 			if(!myInfo.getIsHaveEgg()) {
-				Egg egg = myKeepEggManager.getNearestEgg(location, enemyTeams);
+				nearestEgg = myKeepEggManager.getNearestEgg(location, enemyTeams);
 
 				float[] result = new float[3];
-				Location.distanceBetween(location.getLatitude(), location.getLongitude(), egg.getLatitude(), egg.getLongitude(), result);
+				Location.distanceBetween(location.getLatitude(), location.getLongitude(), nearestEgg.getLatitude(), nearestEgg.getLongitude(), result);
 
 				String directionText = getDirectionString(result[1]);
 
 				distanceTextView.setText(directionText);
 				directionTextView.setText(result[0] + "m");
 
-				myKeepEggManager.progressKeepEggBar(location, new LatLng(egg.getLatitude(), egg.getLongitude()));
+				myKeepEggManager.progressKeepEggBar(location, new LatLng(nearestEgg.getLatitude(), nearestEgg.getLongitude()));
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
 					isCanKeepEgg = true;
 					keepEggTextView.setText("YOU CAN GET AN EGG");
