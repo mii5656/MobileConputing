@@ -571,11 +571,14 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 *  ・GET
 			 */
 			//先頭にデータの情報をつける
-			info.put("DataType", "EGG"+state);
+			info.put("DataType", "EGG_"+state);
 			//更新したいデータの位置
 			info.put("roomID", roomID);
 			info.put("eggID", nearestEgg.getEggID());
 			info.put("teamID", myTeam.getTeamID());
+			info.put("eggLat", nearestEgg.getLatitude());
+			info.put("eggLng", nearestEgg.getLongitude());
+			
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
