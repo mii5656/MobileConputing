@@ -747,6 +747,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		progress = 0;
 		myInfo.setIsHaveEgg(true);
 		isCanKeepEgg = false;
+		eggImgLocation = circleImgLocation;
 		viewFlipper.showNext();
 		//サーバにたまご保持通知
 		new postJSONTask().execute(makeEggInfo("KEEP"));
