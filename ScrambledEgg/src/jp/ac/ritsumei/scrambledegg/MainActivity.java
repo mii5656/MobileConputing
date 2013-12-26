@@ -43,6 +43,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -53,82 +54,82 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 * 画面下部のフリッパー
 	 */
 	private ViewFlipper viewFlipper;
-    private float posX;
+	private float posX;
 
-    /**
-     * たまご、フライパンの設置を管理
-     */
-    private jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager mySettingObjectManager;
+	/**
+	 * たまご、フライパンの設置を管理
+	 */
+	private jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager mySettingObjectManager;
 
-    /**
-     * たまご、フライパンが設置可能か判定
-     */
-    private boolean isCanSetObject = false;
+	/**
+	 * たまご、フライパンが設置可能か判定
+	 */
+	private boolean isCanSetObject = false;
 
-    /**
-     * たまごを設置した数
-     */
-    private int countSetEggs = 0;
+	/**
+	 * たまごを設置した数
+	 */
+	private int countSetEggs = 0;
 
-    /**
-     * たまごの一人あたりの設置数
-     */
-    private final int MAX_SET_EGGS= 2;
+	/**
+	 * たまごの一人あたりの設置数
+	 */
+	private final int MAX_SET_EGGS= 2;
 
-    /**
-     * たまごをが取得可能な状態化管理
-     */
-    private jp.ac.ritsumei.scrambledegg.gps.KeepEggManager myKeepEggManager;
+	/**
+	 * たまごをが取得可能な状態化管理
+	 */
+	private jp.ac.ritsumei.scrambledegg.gps.KeepEggManager myKeepEggManager;
 
-    /**
-     * たまご保持が可能か判定
-     */
-    private boolean isCanKeepEgg = false;
+	/**
+	 * たまご保持が可能か判定
+	 */
+	private boolean isCanKeepEgg = false;
 
-    /**
-     * たまご保持のプログレス
-     */
-    private final int MAX_PROGRESS =100;
-    private ProgressBar keepEggProgressBar;
-    private int progress = 0;
+	/**
+	 * たまご保持のプログレス
+	 */
+	private final int MAX_PROGRESS =100;
+	private ProgressBar keepEggProgressBar;
+	private int progress = 0;
 
-   /**
-     * チームの数
-     */
-    private int numberOfTeams;
+	/**
+	 * チームの数
+	 */
+	private int numberOfTeams;
 
-    /**
-     * プレイヤーの最新の位置情報
-     */
-    private LatLng myLocation;
+	/**
+	 * プレイヤーの最新の位置情報
+	 */
+	private LatLng myLocation;
 
-    /**
-     * 一チームあたりのたまごの設置数
-     */
-    private int numberOfEggs;
+	/**
+	 * 一チームあたりのたまごの設置数
+	 */
+	private int numberOfEggs;
 
-    /**
-     * フライパンに持ち帰った卵の数
-     */
-    private int numberOfEggsInFryPan;
+	/**
+	 * フライパンに持ち帰った卵の数
+	 */
+	private int numberOfEggsInFryPan;
 
 
-    private ExtendApplication app;
+	private ExtendApplication app;
 
-    /**
-     * 最も近い卵のID
-     */
-    private Egg nearestEgg ;
+	/**
+	 * 最も近い卵のID
+	 */
+	private Egg nearestEgg ;
 
-    private TextView gpsAccuracyTextView;
-    private TextView keepEggTextView;
-    private TextView directionTextView;
-    private TextView distanceTextView;
-    private TextView accuracyTextView;
-    private TextView accuracyTextView2;
-    private TextView stateTextView;
+	private TextView gpsAccuracyTextView;
+	private TextView keepEggTextView;
+	private TextView directionTextView;
+	private TextView distanceTextView;
+	private TextView accuracyTextView;
+	private TextView accuracyTextView2;
+	private TextView stateTextView;
 
-    Button setObjectButton;
+	Button setObjectButton;
 
 	/**
 	 * 定期的にGET情報を受け取る
@@ -168,15 +169,15 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	private long elapsedTime;
 
 	private boolean isLastHaveEgg = false;
-	
+
 	/**
 	 * センサー関係
 	 */
 	private SensorManager sensorManager;
-	
+
 	private ImageView keepEggImg;
 
-    @Override
+	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
@@ -185,18 +186,19 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		filter.addAction(Constants.GET_DATA);
 		registerReceiver(receiver, filter);
 
-        viewFlipper = (ViewFlipper) findViewById(R.id.flipper);
-        viewFlipper.setOnTouchListener(this);
+		viewFlipper = (ViewFlipper) findViewById(R.id.flipper);
+		viewFlipper.setOnTouchListener(this);
 
-        mySettingObjectManager = new jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager();
-        setObjectButton = (Button)findViewById(R.id.setObjectButton);
-        setObjectButton.setOnClickListener(new OnClickListener() {
+		mySettingObjectManager = new jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager();
+		setObjectButton = (Button)findViewById(R.id.setObjectButton);
+		setObjectButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if (v.getId() == R.id.setObjectButton) {
 					if(currentState == GAME_STATE.EGG_SET) {
 						if(countSetEggs < MAX_SET_EGGS) {
 							int eggId = countStayingEgg();
 							moveMarker(EGG, eggId, myLocation);
+							Log.e("log", "eggID:"+eggId+"pid:"+myInfo.getPlayerID()+" id,"+myTeam.getEggsList().get(eggId).getEggID());
 							new postJSONTask().execute(makeEggLocationInfo(myTeam.getEggsList().get(eggId).getEggID(), myLocation));
 							countSetEggs++;
 						}
@@ -209,29 +211,28 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				}
 			}
 		});
-        gpsAccuracyTextView = (TextView)findViewById(R.id.gpsAccuracyText);
+		gpsAccuracyTextView = (TextView)findViewById(R.id.gpsAccuracyText);
 
-        myKeepEggManager = new jp.ac.ritsumei.scrambledegg.gps.KeepEggManager();
-        keepEggProgressBar = (ProgressBar)findViewById(R.id.keepEggProgressBar);
-        keepEggProgressBar.setMax(MAX_PROGRESS); // 水平プログレスバーの最大値を設定
-        keepEggTextView = (TextView)findViewById(R.id.keepEggText);
+		myKeepEggManager = new jp.ac.ritsumei.scrambledegg.gps.KeepEggManager();
+		keepEggProgressBar = (ProgressBar)findViewById(R.id.keepEggProgressBar);
+		keepEggProgressBar.setMax(MAX_PROGRESS); // 水平プログレスバーの最大値を設定
+		keepEggTextView = (TextView)findViewById(R.id.keepEggText);
 
-        directionTextView = (TextView)findViewById(R.id.direction2);
-        distanceTextView = (TextView)findViewById(R.id.distance2);
+		directionTextView = (TextView)findViewById(R.id.direction2);
+		distanceTextView = (TextView)findViewById(R.id.distance2);
 
-        accuracyTextView = (TextView)findViewById(R.id.textView);
-        stateTextView = (TextView)findViewById(R.id.textView2);
-        accuracyTextView2 = (TextView)findViewById(R.id.textView3);
-        
-        keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
-        
-        initSensor();
-        
+		accuracyTextView = (TextView)findViewById(R.id.textView);
+		stateTextView = (TextView)findViewById(R.id.textView2);
+		accuracyTextView2 = (TextView)findViewById(R.id.textView3);
 
-        app = (ExtendApplication)getApplication();
+		keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
 
-        makeRoom();
+		initSensor();
 
+
+		app = (ExtendApplication)getApplication();
+
+		makeRoom();
 	}
 
 
@@ -305,9 +306,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 					if(lastState != GAME_STATE.START) {
 						viewFlipper.showNext();
-//						displayTeamMarkers(myTeam.getTeamID());
-//						displayFryPanMarker();
-//						displayEggMarkers();
+						//						displayTeamMarkers(myTeam.getTeamID());
+						//						displayFryPanMarker();
+						//						displayEggMarkers();
 					}
 
 					for(int i = 0; i < myTeam.getEggsList().size(); i++) {
@@ -355,6 +356,12 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 					stopGPSService();
 					break;
 				}
+				Log.i("client", myInfo.getJSONObject().toString());
+				//TODO
+				Log.i("client", myTeam.getJSONObject().toString());
+				for(Team t:enemyTeams){
+					Log.i("client", t.getJSONObject().toString());	
+				}
 			}
 		}
 	}
@@ -381,36 +388,62 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 					myTeam.setBaseLatitude(team.getDouble("latitude"));
 					myTeam.setBaseLongitude(team.getDouble("longitude"));
 
+
 					//Players List
 					JSONArray players = team.getJSONArray("playersList");
-					for(int j = 0;j < players.length();j++){
-						JSONObject player = players.getJSONObject(j);
-						//自分の情報はいらない
-						if(myInfo.getPlayerID() != player.getInt("playerID")){
-							for(Player p : myTeam.getPlayersList()){
-								//チームメンバの位置情報更新
-								if(player.getInt("playerID") == p.getPlayerID()){
-									p.setLatitude(player.getDouble("latitude"));
-									p.setLongitude(player.getDouble("longitude"));
+					List<Player> pList = myTeam.getPlayersList();
+					if(pList.size() == 0){//初期
+						for(int j = 0;j < players.length();j++){
+							JSONObject player = players.getJSONObject(j);
+							if(myInfo.getPlayerID()==player.getInt("playerID")){
+								pList.add(new Player("Player"+player.getInt("playerID")
+										, player.getInt("playerID")
+										, player.getDouble("latitude")
+										, player.getDouble("longitude")));
+							}
+						}
+					}else{
+						for(int j = 0;j < players.length();j++){
+							JSONObject player = players.getJSONObject(j);
+							//自分の情報はいらない
+							if(myInfo.getPlayerID() != player.getInt("playerID")){
+								for(Player p : pList){
+									//チームメンバの位置情報更新
+									if(player.getInt("playerID") == p.getPlayerID()){
+										p.setLatitude(player.getDouble("latitude"));
+										p.setLongitude(player.getDouble("longitude"));
+									}
 								}
 							}
 						}
 					}
 
+
 					//Eggs List
 					JSONArray eggs = team.getJSONArray("eggsList");
-					for(int j = 0; j < eggs.length(); j++){
-						JSONObject egg = eggs.getJSONObject(j);
-						for(Egg e : myTeam.getEggsList()){
-							if(e.getEggID() == egg.getInt("eggID")){
-								e.setLatitude(egg.getDouble("latitude"));
-								e.setLongitude(egg.getDouble("longitude"));
-								e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+					List<Egg> eList = myTeam.getEggsList();
+					if(eList.size() == 0){//初期
+						for(int j = 0;j < eggs.length();j++){
+							JSONObject egg = eggs.getJSONObject(j);
+							eList.add(new Egg(egg.getInt("eggID"),
+									egg.getDouble("latitude"),
+									egg.getDouble("longitude")));
+						}
+					}else{
+						for(int j = 0; j < eggs.length(); j++){
+							JSONObject egg = eggs.getJSONObject(j);
+							for(Egg e : eList){
+								if(e.getEggID() == egg.getInt("eggID")){
+									e.setLatitude(egg.getDouble("latitude"));
+									e.setLongitude(egg.getDouble("longitude"));
+									e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+								}
 							}
 						}
 					}
 				}else{//相手チーム情報の更新
 
+					boolean ditectTeamflag=true;
 					for(Team t : enemyTeams){
 						if(t.getTeamID() ==  team.getInt("teamID")){
 
@@ -444,7 +477,34 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 									}
 								}//egg
 							}
+							ditectTeamflag = false;
 						}//teamID
+					}
+					if(ditectTeamflag){
+						Team t = new Team("グループ"+team.getInt("teamID"), team.getInt("teamID"));
+						//基地の更新
+						t.setBaseLatitude(team.getDouble("latitude"));
+						t.setBaseLongitude(team.getDouble("longitude"));
+
+						//Players List
+						JSONArray players = team.getJSONArray("playersList");
+						for(int j = 0;j < players.length();j++){
+							JSONObject player = players.getJSONObject(j);
+
+							//敵チームメンバ追加
+							t.addPlayerList(new Player("Player"+player.getInt("playerID")
+									, player.getInt("playerID")
+									, player.getDouble("latitude")
+									, player.getDouble("longitude")));
+						}//player
+
+						//Eggs List
+						JSONArray eggs = team.getJSONArray("eggsList");
+						for(int j = 0; j < eggs.length(); j++){
+							JSONObject egg = eggs.getJSONObject(j);
+							t.addEggList(new Egg(egg.getInt("eggID"), egg.getDouble("latitude"), egg.getDouble("longitude")));
+						}//egg
+						enemyTeams.add(t);
 					}
 				}
 			}
@@ -493,11 +553,12 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	public JSONObject makeMyLocationInfo(LatLng point){
 		JSONObject info = new JSONObject();
 
-		try {
+		try{
 			//先頭にデータの情報をつける
 			info.put("DataType", "GPS");
 			//更新したいデータの位置
 			info.put("roomID", roomID);
+			info.put("teamID", myInfo.getTeamID());
 			info.put("playerID",myInfo.getPlayerID());
 			//更新したい情報
 			info.put("latitude", point.latitude);
@@ -508,7 +569,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return info;
 	}
 
-//TODO サーバー
+	//TODO サーバー
 	/**
 	 * サーバに送るたまご情報をJSONにする
 	 * @return
@@ -532,7 +593,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return info;
 	}
 
-//TODO サーバー
+	//TODO サーバー
 	/**
 	 * サーバに送るフライパン情報をJSONにする
 	 * @return
@@ -554,8 +615,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		}
 		return info;
 	}
-	
-//TODO サーバー
+
+	//TODO サーバー
 	/**
 	 * サーバに送るたまご保持情報をJSONにする
 	 * @return
@@ -578,7 +639,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			info.put("teamID", myTeam.getTeamID());
 			info.put("eggLat", nearestEgg.getLatitude());
 			info.put("eggLng", nearestEgg.getLongitude());
-			
+
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -593,28 +654,33 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		/**
 		 * Roomの中に、Teamがあって、Teamの中にPlayerのリストとEggのリストがある
 		 */
-		myInfo = new Player("player"+app.getPlayerID(), 1, 35, 135 );
+		roomID = app.getRoomID();
+
+		myInfo = new Player("player"+app.getPlayerID(), app.getPlayerID(), 35, 135 );
+		myInfo.setTeamID(app.getTeamID());
 
 		enemyTeams = new ArrayList<Team>();
 		myTeam = new Team("team"+app.getTeamID(),app.getTeamID());
-//
-//		myTeam.addPlayerList(myInfo);
-//		myTeam.addPlayerList(new Player("p2", 2, 35,135));
-//		myTeam.addEggList(new Egg(1,35,135));
-//		myTeam.addEggList(new Egg(2,35,135));
-//
-//
-//		Team team2 = new Team("team1",2);
-//		team2.addPlayerList(new Player("p3",3,35,135));
-//		team2.addPlayerList(new Player("p4", 4, 35,135));
-//		team2.addEggList(new Egg(3,35,135));
-//		team2.addEggList(new Egg(4,35,135));
-//		enemyTeams.add(team2);
+		
+		//
+		//		myTeam.addPlayerList(myInfo);
+		//		myTeam.addPlayerList(new Player("p2", 2, 35,135));
+		//		myTeam.addEggList(new Egg(1,35,135));
+		//		myTeam.addEggList(new Egg(2,35,135));
+		//
+		//
+		//		Team team2 = new Team("team1",2);
+		//		team2.addPlayerList(new Player("p3",3,35,135));
+		//		team2.addPlayerList(new Player("p4", 4, 35,135));
+		//		team2.addEggList(new Egg(3,35,135));
+		//		team2.addEggList(new Egg(4,35,135));
+		//		enemyTeams.add(team2);
 
 		numberOfTeams = app.getTeamNum();
 		numberOfEggs = app.getPlayerNum();
 
 		createAllMarkers(numberOfEggs, numberOfTeams);
+
 	}
 
 	/**
@@ -650,7 +716,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		accuracyTextView2.setText("" + location.getAccuracy());
 		new postJSONTask().execute(makeMyLocationInfo(myLocation));
 
-		switch(currentState) {
+		switch(currentState){
 		case LISTEN:
 			break;
 
@@ -691,12 +757,12 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 			break;
 
-		/**
-		 * たまご探索中の処理
-		 * ・ヒント情報の更新
-		 * ・たまご保持可能か判定
-		 * ・チームメンバーの位置更新
-		 */
+			/**
+			 * たまご探索中の処理
+			 * ・ヒント情報の更新
+			 * ・たまご保持可能か判定
+			 * ・チームメンバーの位置更新
+			 */
 		case START:
 
 			moveMarker(PLAYER, 0, new LatLng(location.getLatitude(), location.getLongitude()));
@@ -731,13 +797,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 			}
 
-		break;
+			break;
 
-		/**
-		 * 結果画面
-		 */
-	case END:
-		break;
+			/**
+			 * 結果画面
+			 */
+		case END:
+			break;
 		}
 
 	}
@@ -783,53 +849,53 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 
-//		/**
-//		 * 画面下部のフリップ動作
-//		 */
-//		switch(event.getAction()){
-//
-//		case MotionEvent.ACTION_DOWN:
-//			// タッチ場所を取得
-//			posX = event.getX();
-//			break;
-//		case MotionEvent.ACTION_UP:
-//			if(posX > event.getX()){
-//
-//
-//				// 次ページへ移動
-//				viewFlipper.showNext();
-//			}else if(posX < event.getX()){
-//
-//				// 前ページへ移動
-//				viewFlipper.showPrevious();
-//			}
-//		default:
-//			break;
-//		}
+		//		/**
+		//		 * 画面下部のフリップ動作
+		//		 */
+		//		switch(event.getAction()){
+		//
+		//		case MotionEvent.ACTION_DOWN:
+		//			// タッチ場所を取得
+		//			posX = event.getX();
+		//			break;
+		//		case MotionEvent.ACTION_UP:
+		//			if(posX > event.getX()){
+		//
+		//
+		//				// 次ページへ移動
+		//				viewFlipper.showNext();
+		//			}else if(posX < event.getX()){
+		//
+		//				// 前ページへ移動
+		//				viewFlipper.showPrevious();
+		//			}
+		//		default:
+		//			break;
+		//		}
 		return true;
 	}
 
-//	@Override
-//	public void onClick(View v) {
-//		if (v == setObjectButton) {
-//			Log.v("TEST","tap");
-//			System.out.println("tap");
-//			if(currentState == GAME_STATE.EGG_SET) {
-//				if(countSetEggs < MAX_SET_EGGS) {
-//					int eggId = countStayingEgg();
-//					new postJSONTask().execute(makeEggLocationInfo(eggId, myLocation));
-//					moveMarker(EGG, eggId, myLocation);
-//					countSetEggs++;
-//				}
-//
-//			} else if (currentState == GAME_STATE.POSITION_SET) {
-//				new postJSONTask().execute(makeFryPanLocationInfo(myLocation));
-//				Log.v("TEST","marker");
-//				System.out.println("marker");
-//				moveMarker(FRY_PAN, 0, myLocation);
-//			}
-//		}
-//	}
+	//	@Override
+	//	public void onClick(View v) {
+	//		if (v == setObjectButton) {
+	//			Log.v("TEST","tap");
+	//			System.out.println("tap");
+	//			if(currentState == GAME_STATE.EGG_SET) {
+	//				if(countSetEggs < MAX_SET_EGGS) {
+	//					int eggId = countStayingEgg();
+	//					new postJSONTask().execute(makeEggLocationInfo(eggId, myLocation));
+	//					moveMarker(EGG, eggId, myLocation);
+	//					countSetEggs++;
+	//				}
+	//
+	//			} else if (currentState == GAME_STATE.POSITION_SET) {
+	//				new postJSONTask().execute(makeFryPanLocationInfo(myLocation));
+	//				Log.v("TEST","marker");
+	//				System.out.println("marker");
+	//				moveMarker(FRY_PAN, 0, myLocation);
+	//			}
+	//		}
+	//	}
 
 	/**
 	 * 設置されているたまごの数を数える
@@ -882,28 +948,28 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	public void setRoomID(int roomID) {
 		this.roomID = roomID;
 	}
-	
+
 	/**
 	 * たまご獲得動作検出
 	 */
 	private void checkMotion(float z){
 		if(z < -5) keepEgg();
 	}
-	
+
 	/**
 	 * たまご画像位置更新
 	 */
 	private void replaceEggImg(float x, float y){
 		keepEggImg.layout(keepEggImg.getLeft()-(int)x*5, keepEggImg.getTop()+(int)y*5, keepEggImg.getWidth(), keepEggImg.getHeight());
 	}
-	
+
 	/**
 	 * センサー初期化
 	 */
 	protected void initSensor(){
 		sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 	}
-	
+
 	/**
 	 * 加速度センサー登録
 	 */
@@ -914,7 +980,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			sensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
 		}
 	}
-	
+
 	/**
 	 * センサーイベントハンドラ（精度変化）
 	 */
@@ -931,7 +997,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			else if(myInfo.getIsHaveEgg()) replaceEggImg(event.values[0],event.values[1]);
 		}
 	}
-	
+
 	/**
 	 * 加速度センサー登録解除
 	 */

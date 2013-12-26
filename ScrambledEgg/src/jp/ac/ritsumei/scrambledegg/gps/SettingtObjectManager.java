@@ -5,7 +5,7 @@ import com.google.android.gms.maps.model.LatLng;
 import android.location.Location;
 
 public class SettingtObjectManager {
-	public static final double ACCURACY_THRESH = 15.0;
+	public static final double ACCURACY_THRESH = 35.0;
 	public static final int EGG = 1;
 	public static final int FRY_PAN = 2;
 	private int accuracyCount = 0;

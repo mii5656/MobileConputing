@@ -1,6 +1,7 @@
 package jp.ac.ritsumei.scrambledegg.room;
 
 
+import jp.ac.ritsumei.scrambledegg.ExtendApplication;
 import jp.ac.ritsumei.scrambledegg.R;
 import android.app.Activity;
 import android.content.Intent;
@@ -21,7 +22,6 @@ public class TitleActivity extends Activity {
 		
 		Button button1 = (Button)findViewById(R.id.button1);
 		button1.setOnClickListener(new OnClickListener() {
-
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
@@ -33,5 +33,7 @@ public class TitleActivity extends Activity {
 			}
 		});
 		
+		ExtendApplication app = (ExtendApplication)getApplication();
+		app.initData();
 	}	
 }

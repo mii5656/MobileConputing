@@ -42,7 +42,7 @@ public class GameInfoGetterService extends Service {
 		
 		GetInfoTimerTask task = new GetInfoTimerTask();
 		infoGetTimer = new Timer();
-		infoGetTimer.schedule(task, 1000, 5000);//5秒サイクルで実行	
+		infoGetTimer.schedule(task, 1000, 4000);//5秒サイクルで実行	
 		
 		httpClient  = new DefaultHttpClient();	
 		

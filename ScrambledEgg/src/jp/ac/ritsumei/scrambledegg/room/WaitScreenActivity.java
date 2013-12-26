@@ -53,8 +53,9 @@ public class WaitScreenActivity extends Activity{
 		roomID=app.getRoomID();
 		
 		playerIDtext = (TextView)findViewById(R.id.edName);
+		playerIDtext.setText("読み込み中");
 		teamIDtext = (TextView)findViewById(R.id.edMail);
-		
+		teamIDtext.setText("読み込み中");
 		new postJSONTask().execute(makeRegistterInfo());
 	}
 
@@ -67,7 +68,7 @@ public class WaitScreenActivity extends Activity{
 		super.onResume();
 		GetInfoTimerTask task = new GetInfoTimerTask();
 		infoGetTimer = new Timer();
-		infoGetTimer.schedule(task, 1000, 5000);//5秒サイクルで実行	
+		infoGetTimer.schedule(task, 1000, 3000);//3秒サイクルで実行	
 	}
 
 
@@ -115,12 +116,12 @@ public class WaitScreenActivity extends Activity{
 				httpResponse = httpClient.execute(postRequest);
 				
 				JSONObject result = new JSONObject(EntityUtils.toString(httpResponse.getEntity()));
-				Log.e("wait", result.toString());
+				Log.e("wait", result.toString()+":roomID "+ roomID);
 				if(result.getBoolean("result")){
 					app.setPlayerID(result.getInt("playerID"));
 					playerIDtext.setText(String.valueOf(app.getPlayerID()));
 					app.setTeamID(result.getInt("teamID"));
-					teamIDtext.setText(String.valueOf(app.getPlayerID()));
+					teamIDtext.setText(String.valueOf(app.getTeamID()));
 				}else{
 					Intent intent = new Intent(app, EntryRoomActivity.class);
 					startActivity(intent);

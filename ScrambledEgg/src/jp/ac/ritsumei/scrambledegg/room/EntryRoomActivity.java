@@ -84,6 +84,8 @@ public class EntryRoomActivity extends Activity{
 				app.setPlayerNum(data.get("playerNum"));
 				app.setTeamNum(data.get("teamNum"));
 				
+				Log.e("entryROOM", "room" +data.get("roomID")+" player "+data.get("playerNum")+" teamNum" +data.get("teamNum"));
+				
 				startActivity(new Intent(app,WaitScreenActivity.class));
 			}
 		});	

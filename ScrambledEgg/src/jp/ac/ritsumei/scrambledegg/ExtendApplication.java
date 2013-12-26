@@ -14,6 +14,14 @@ public class ExtendApplication extends Application {
 	protected int playerNum;
 	protected int teamNum;
 	
+	public void initData(){
+		this.roomID = -1;
+		this.playerID = -1;
+		this.teamID = -1;
+		this.playerID = -1;
+		this.teamNum = -1;
+	}
+	
 	public int getRoomID(){
 		return roomID;
 	}
