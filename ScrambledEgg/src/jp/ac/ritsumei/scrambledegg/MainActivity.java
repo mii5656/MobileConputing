@@ -3,8 +3,8 @@ package jp.ac.ritsumei.scrambledegg;
 import java.util.ArrayList;
 import java.util.List;
 
+import jp.ac.ritsumei.scrambledegg.gps.KeepEggManager;
 import jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager;
-import jp.ac.ritsumei.scrambledegg.room.MakeRoomActivity;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg.EGG_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Player;
@@ -53,17 +53,12 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 * 画面下部のフリッパー
 	 */
 	private ViewFlipper viewFlipper;
-    private float posX;
+//    private float posX;
 
     /**
      * たまご、フライパンの設置を管理
      */
-    private jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager mySettingObjectManager;
-
-    /**
-     * たまご、フライパンが設置可能か判定
-     */
-    private boolean isCanSetObject = false;
+    private SettingtObjectManager mySettingObjectManager;
 
     /**
      * たまごを設置した数
@@ -78,7 +73,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     /**
      * たまごをが取得可能な状態化管理
      */
-    private jp.ac.ritsumei.scrambledegg.gps.KeepEggManager myKeepEggManager;
+    private KeepEggManager myKeepEggManager;
 
     /**
      * たまご保持が可能か判定
@@ -106,12 +101,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
      * 一チームあたりのたまごの設置数
      */
     private int numberOfEggs;
-
-    /**
-     * フライパンに持ち帰った卵の数
-     */
-    private int numberOfEggsInFryPan;
-
 
     private ExtendApplication app;
 
@@ -664,11 +653,11 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * フライパン設置可能か判定
 			 */
 		case POSITION_SET:
-			if((isCanSetObject = mySettingObjectManager.chaeckGPSAccuracy(location, SettingtObjectManager.ACCURACY_THRESH))){
-				gpsAccuracyTextView.setText("GPS:OK");
+			if((mySettingObjectManager.chaeckGPSAccuracy(location, SettingtObjectManager.ACCURACY_THRESH))){
+				gpsAccuracyTextView.setText("GPS Accuracy:OK");
 				setObjectButton.setClickable(true);
 			} else {
-				gpsAccuracyTextView.setText("GPS:NG");
+				gpsAccuracyTextView.setText("GPS Accuracy:NG");
 				setObjectButton.setClickable(false);
 			}
 
@@ -681,11 +670,11 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * たまご設置可能か判定
 			 */
 		case EGG_SET:
-			if((isCanSetObject = mySettingObjectManager.chaeckGPSAccuracy(location, SettingtObjectManager.ACCURACY_THRESH))){
-				gpsAccuracyTextView.setText("GPS:OK");
+			if((mySettingObjectManager.chaeckGPSAccuracy(location, SettingtObjectManager.ACCURACY_THRESH))){
+				gpsAccuracyTextView.setText("GPS Accuracy:OK");
 				setObjectButton.setClickable(true);
 			} else {
-				gpsAccuracyTextView.setText("GPS:NG");
+				gpsAccuracyTextView.setText("GPS Accuracy:NG");
 				setObjectButton.setClickable(false);
 			}
 
@@ -716,22 +705,32 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 				distanceTextView.setText(directionText);
 				directionTextView.setText(result[0] + "m");
+				
 
 				myKeepEggManager.progressKeepEggBar(location, new LatLng(egg.getLatitude(), egg.getLongitude()));
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
 					isCanKeepEgg = true;
 					keepEggTextView.setText("YOU CAN GET AN EGG");
 					registerAccelerometer();
+					distanceTextView.setText("------");
+					directionTextView.setText("------");
 				} else if((progress = myKeepEggManager.getProgress()) == 0) {
 					isCanKeepEgg = false;
 					keepEggTextView.setText("YOU ARE NOT NEAR EGGS");
-				}else{
+				} else {
 					isCanKeepEgg = false;
 					keepEggTextView.setText("YOU ARE NEAR AN EGG");
+					distanceTextView.setText("------");
+					directionTextView.setText("------");
 				}
 				keepEggProgressBar.setProgress(progress);
 
+			} else {
+				if(myKeepEggManager.isNearGoal(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(myTeam.getBaseLatitude(), myTeam.getBaseLongitude()))) {
+					goalEgg();
+				}
 			}
+
 
 		break;
 
@@ -745,6 +744,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	}
 
 	public void keepEgg() {
+		progress = 0;
 		myInfo.setIsHaveEgg(true);
 		isCanKeepEgg = false;
 		viewFlipper.showNext();

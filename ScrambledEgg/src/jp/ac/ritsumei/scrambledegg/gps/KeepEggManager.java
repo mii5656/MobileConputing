@@ -12,6 +12,7 @@ public class KeepEggManager {
 
 	private final double FIRST_DISTANCE_THRESH = 5.0;
 	private final double KEEP_DISTANCE_THRESH = 30.0;
+	private final double GOAL_DIRECTION_THRESH = 10.0;
 	private int progress = 0;
 	private boolean isKeepNearEgg = false;
 
@@ -102,4 +103,15 @@ public class KeepEggManager {
 	public int getProgress(){
 		return progress;
 	}
+	
+	public boolean isNearGoal(LatLng myPosition, LatLng fryPanPosition) {
+		float[] result = new float[3];
+		Location.distanceBetween(myPosition.latitude, myPosition.longitude, fryPanPosition.latitude, fryPanPosition.longitude, result);
+		if(result[0] < GOAL_DIRECTION_THRESH) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 }
