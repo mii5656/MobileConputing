@@ -118,7 +118,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
     /**
      * 最も近い卵のID
      */
-    private Egg nearestEgg ;
+    private int nearestEggId = 0;
 
     private TextView gpsAccuracyTextView;
     private TextView keepEggTextView;
@@ -174,7 +174,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	private SensorManager sensorManager;
 	
-	private ImageView keepEggImg;
+	private ImageView keepEggImg, limitCircle;
+	private int[] eggImgLocation, circleImgLocation;
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -224,6 +225,11 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
         accuracyTextView2 = (TextView)findViewById(R.id.textView3);
         
         keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
+        limitCircle = (ImageView)findViewById(R.id.limitCircle);
+        eggImgLocation = new int[2];
+        circleImgLocation = new int[2];
+        circleImgLocation[0] = limitCircle.getLeft() + limitCircle.getWidth()/2;
+        circleImgLocation[1] = limitCircle.getTop() + limitCircle.getHeight()/2;
         
         initSensor();
         
@@ -573,12 +579,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			//先頭にデータの情報をつける
 			info.put("DataType", "EGG_"+state);
 			//更新したいデータの位置
-			info.put("roomID", roomID);
-			info.put("eggID", nearestEgg.getEggID());
-			info.put("teamID", myTeam.getTeamID());
-			info.put("eggLat", nearestEgg.getLatitude());
-			info.put("eggLng", nearestEgg.getLongitude());
-			
+			info.put("eggID", nearestEggId);
+			if(state.equals("GET")) info.put("teamID", myTeam.getTeamID());
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -705,17 +707,17 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * たまご探索中の処理
 			 */
 			if(!myInfo.getIsHaveEgg()) {
-				nearestEgg = myKeepEggManager.getNearestEgg(location, enemyTeams);
+				Egg egg = myKeepEggManager.getNearestEgg(location, enemyTeams);
 
 				float[] result = new float[3];
-				Location.distanceBetween(location.getLatitude(), location.getLongitude(), nearestEgg.getLatitude(), nearestEgg.getLongitude(), result);
+				Location.distanceBetween(location.getLatitude(), location.getLongitude(), egg.getLatitude(), egg.getLongitude(), result);
 
 				String directionText = getDirectionString(result[1]);
 
 				distanceTextView.setText(directionText);
 				directionTextView.setText(result[0] + "m");
 
-				myKeepEggManager.progressKeepEggBar(location, new LatLng(nearestEgg.getLatitude(), nearestEgg.getLongitude()));
+				myKeepEggManager.progressKeepEggBar(location, new LatLng(egg.getLatitude(), egg.getLongitude()));
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
 					isCanKeepEgg = true;
 					keepEggTextView.setText("YOU CAN GET AN EGG");
@@ -782,6 +784,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
+		
+		//たまごを保持している状態で画面がタッチされたらたまごを壊す
+		if(event.getAction() == MotionEvent.ACTION_DOWN && myInfo.getIsHaveEgg()) breakEgg();
 
 //		/**
 //		 * 画面下部のフリップ動作
@@ -895,6 +900,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	private void replaceEggImg(float x, float y){
 		keepEggImg.layout(keepEggImg.getLeft()-(int)x*5, keepEggImg.getTop()+(int)y*5, keepEggImg.getWidth(), keepEggImg.getHeight());
+		eggImgLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
+        eggImgLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
+        
+        //たまごの中心からのずれ計算、損失判定
+        double dx = Math.pow((double)eggImgLocation[0]-(double)circleImgLocation[0],2.0);
+        double dy = Math.pow((double)eggImgLocation[1]-(double)circleImgLocation[1],2.0);
+        if(Math.sqrt(dx+dy) > limitCircle.getWidth()/2) breakEgg();
 	}
 	
 	/**
