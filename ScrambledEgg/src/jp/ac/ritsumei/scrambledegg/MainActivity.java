@@ -812,6 +812,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	}
 
 	public void keepEgg() {
+
+		Log.v("KeepEgg", "keep egg");
 		myInfo.setIsHaveEgg(true);
 		isCanKeepEgg = false;
 		viewFlipper.showNext();
@@ -959,6 +961,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 * たまご獲得動作検出
 	 */
 	private void checkMotion(float z){
+
+		Log.v("CheckMotion", "acc[2]:" + z);
 		if(z < -5) keepEgg();
 	}
 
@@ -989,6 +993,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	protected void registerAccelerometer(){
 		List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
 		if(sensors.size() > 0){
+
+			Log.v("RegisterAccelerometer", "regist acc");
 			Sensor s = sensors.get(0);
 			sensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
 		}
@@ -1006,6 +1012,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+			Log.v("OnSensorChanged", "get acc");
 			if(isCanKeepEgg) checkMotion(event.values[2]);
 			else if(myInfo.getIsHaveEgg()) replaceEggImg(event.values[0],event.values[1]);
 		}
