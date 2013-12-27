@@ -794,6 +794,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				}
 				keepEggProgressBar.setProgress(progress);
 
+			} else {
+				if(myKeepEggManager.isNearGoal(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(myTeam.getBaseLatitude(), myTeam.getBaseLongitude()))) {
+					goalEgg();
+				}
 			}
 
 			break;
@@ -847,6 +851,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
+
+	//たまごを保持している状態で画面がタッチされたらたまごを壊す
+	if(event.getAction() == MotionEvent.ACTION_DOWN && myInfo.getIsHaveEgg()) breakEgg();
 
 		//		/**
 		//		 * 画面下部のフリップ動作
@@ -960,6 +967,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	private void replaceEggImg(float x, float y){
 		keepEggImg.layout(keepEggImg.getLeft()-(int)x*5, keepEggImg.getTop()+(int)y*5, keepEggImg.getWidth(), keepEggImg.getHeight());
+		eggImgLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
+        eggImgLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
+        
+        //たまごの中心からのずれ計算、損失判定
+        double dx = Math.pow((double)eggImgLocation[0]-(double)circleImgLocation[0],2.0);
+        double dy = Math.pow((double)eggImgLocation[1]-(double)circleImgLocation[1],2.0);
+        if(Math.sqrt(dx+dy) > limitCircle.getWidth()/2) breakEgg();
 	}
 
 	/**
