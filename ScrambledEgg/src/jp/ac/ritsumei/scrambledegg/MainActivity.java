@@ -164,7 +164,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	private SensorManager sensorManager;
 
 		private ImageView keepEggImg, limitCircle;
-	private int[] eggImgLocation, circleImgLocation;
+	private int[] eggImgLocation, circleImgLocation, eggImgFirstLocation;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -224,10 +224,11 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
         limitCircle = (ImageView)findViewById(R.id.limitCircle);
         eggImgLocation = new int[2];
         circleImgLocation = new int[2];
+        eggImgFirstLocation = new int[2];
         circleImgLocation[0] = limitCircle.getLeft() + limitCircle.getWidth()/2;
         circleImgLocation[1] = limitCircle.getTop() + limitCircle.getHeight()/2;
-        
-
+        eggImgFirstLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
+        eggImgFirstLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
 
 		app = (ExtendApplication)getApplication();
 
@@ -816,6 +817,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		Log.v("KeepEgg", "keep egg");
 		myInfo.setIsHaveEgg(true);
 		isCanKeepEgg = false;
+		eggImgLocation[0] = eggImgFirstLocation[0];
+		eggImgLocation[1] = eggImgFirstLocation[1];
 		viewFlipper.showNext();
 		//サーバにたまご保持通知
 		new postJSONTask().execute(makeEggInfo("KEEP"));
