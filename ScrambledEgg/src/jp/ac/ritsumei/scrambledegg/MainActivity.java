@@ -163,7 +163,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	private SensorManager sensorManager;
 
-		private ImageView keepEggImg, limitCircle;
+	private ImageView keepEggImg, limitCircle;
 	private int[] eggImgLocation, circleImgLocation, eggImgFirstLocation;
 
 	@Override
@@ -216,22 +216,21 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
 
-		 accuracyTextView = (TextView)findViewById(R.id.textView);
-        stateTextView = (TextView)findViewById(R.id.textView2);
-        accuracyTextView2 = (TextView)findViewById(R.id.textView3);
-        
-        keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
-        limitCircle = (ImageView)findViewById(R.id.limitCircle);
-        eggImgLocation = new int[2];
-        circleImgLocation = new int[2];
-        eggImgFirstLocation = new int[2];
-        circleImgLocation[0] = limitCircle.getLeft() + limitCircle.getWidth()/2;
-        circleImgLocation[1] = limitCircle.getTop() + limitCircle.getHeight()/2;
-        eggImgFirstLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
-        eggImgFirstLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
+		accuracyTextView = (TextView)findViewById(R.id.textView);
+		stateTextView = (TextView)findViewById(R.id.textView2);
+		accuracyTextView2 = (TextView)findViewById(R.id.textView3);
+
+		keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
+		limitCircle = (ImageView)findViewById(R.id.limitCircle);
+		eggImgLocation = new int[2];
+		circleImgLocation = new int[2];
+		eggImgFirstLocation = new int[2];
+		circleImgLocation[0] = limitCircle.getLeft() + limitCircle.getWidth()/2;
+		circleImgLocation[1] = limitCircle.getTop() + limitCircle.getHeight()/2;
+		eggImgFirstLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
+		eggImgFirstLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
 
 		app = (ExtendApplication)getApplication();
-
 		makeRoom();
 	}
 
@@ -338,14 +337,14 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 						 */
 						for(int team = 0; team < enemyTeams.size(); team++) {
 							Team enemyTeam = enemyTeams.get(team);
-							for(int i = 0; i < enemyTeam.getPlayersList().size() ; i++) {
+							for(int i = 0; i < enemyTeam.getPlayersList().size() ; i++){
 								Player member = enemyTeam.getPlayersList().get(i);
 								moveMarker(myTeam.getTeamID() + TEAM_A, member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
 							}
 						}
 						isLastHaveEgg = true;
 					} else {
-						if(isLastHaveEgg) {
+						if(isLastHaveEgg){
 							hideEnemyMarkers(myTeam.getTeamID(), numberOfTeams);
 						}
 						isLastHaveEgg = false;
@@ -639,7 +638,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			info.put("teamID", myTeam.getTeamID());
 			info.put("eggLat", nearestEgg.getLatitude());
 			info.put("eggLng", nearestEgg.getLongitude());
-
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -661,7 +659,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		enemyTeams = new ArrayList<Team>();
 		myTeam = new Team("team"+app.getTeamID(),app.getTeamID());
-		
+
 		//
 		//		myTeam.addPlayerList(myInfo);
 		//		myTeam.addPlayerList(new Player("p2", 2, 35,135));
@@ -809,11 +807,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		case END:
 			break;
 		}
-
 	}
 
-	public void keepEgg() {
 
+	public void keepEgg() {
 		Log.v("KeepEgg", "keep egg");
 		myInfo.setIsHaveEgg(true);
 		isCanKeepEgg = false;
@@ -851,14 +848,15 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			return "SOUTH";
 		}
 	}
+
 	/**
 	 *  タッチイベント発生時
 	 */
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 
-	//たまごを保持している状態で画面がタッチされたらたまごを壊す
-	if(event.getAction() == MotionEvent.ACTION_DOWN && myInfo.getIsHaveEgg()) breakEgg();
+		//たまごを保持している状態で画面がタッチされたらたまごを壊す
+		if(event.getAction() == MotionEvent.ACTION_DOWN && myInfo.getIsHaveEgg()) breakEgg();
 
 		//		/**
 		//		 * 画面下部のフリップ動作
@@ -975,12 +973,12 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	private void replaceEggImg(float x, float y){
 		keepEggImg.layout(keepEggImg.getLeft()-(int)x*5, keepEggImg.getTop()+(int)y*5, keepEggImg.getWidth(), keepEggImg.getHeight());
 		eggImgLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
-        eggImgLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
-        
-        //たまごの中心からのずれ計算、損失判定
-        double dx = Math.pow((double)eggImgLocation[0]-(double)circleImgLocation[0],2.0);
-        double dy = Math.pow((double)eggImgLocation[1]-(double)circleImgLocation[1],2.0);
-        if(Math.sqrt(dx+dy) > limitCircle.getWidth()/2) breakEgg();
+		eggImgLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
+
+		//たまごの中心からのずれ計算、損失判定
+		double dx = Math.pow((double)eggImgLocation[0]-(double)circleImgLocation[0],2.0);
+		double dy = Math.pow((double)eggImgLocation[1]-(double)circleImgLocation[1],2.0);
+		if(Math.sqrt(dx+dy) > limitCircle.getWidth()/2) breakEgg();
 	}
 
 	/**
@@ -1028,4 +1026,22 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		sensorManager.unregisterListener(this);
 	}
 
+//	protected boolean checkStateUpDate(GAME_STATE gameState){
+//
+//		switch (gameState) {
+//		case LISTEN:
+//			break;
+//		case TEAM_SET:
+//			break;
+//		case POSITION_SET:
+//			break;
+//		case EGG_SET:
+//			break;
+//		case END:
+//			break;
+//		case START:
+//			break;
+//		}
+//		return true;
+//	}
 }
