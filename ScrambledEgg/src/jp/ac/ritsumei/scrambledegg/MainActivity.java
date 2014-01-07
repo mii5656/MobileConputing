@@ -776,8 +776,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 				String directionText = getDirectionString(result[1]);
 
-				distanceTextView.setText(directionText);
-				directionTextView.setText(result[0] + "m");
+				directionTextView.setText(directionText);
+				distanceTextView.setText(String.format("%3d", result[0]) + "m");
 
 				myKeepEggManager.progressKeepEggBar(location, new LatLng(nearestEgg.getLatitude(), nearestEgg.getLongitude()));
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
