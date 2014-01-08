@@ -29,6 +29,7 @@
     <TableRow>
 
         <TextView
+            android:id="@+id/resultText1"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="スクランブルエッグの大きかった上位3チーム"
@@ -43,6 +44,7 @@
     <TableRow>
 
         <TextView
+            android:id="@+id/resultText2"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="No.1 Egg Collector"

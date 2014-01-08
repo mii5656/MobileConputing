@@ -1,0 +1,24 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/back3"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="150dp" >
+
+<ImageView 
+    android:id="@+id/limitCircle"
+    android:contentDescription="@string/egg_desc"
+    android:layout_width="180dp"
+    android:layout_height="180dp"
+    android:layout_gravity="center"
+    android:src="@drawable/hand" />
+
+<ImageView 
+    android:id="@+id/keepEggImg"
+    android:contentDescription="@string/egg_desc"
+    android:layout_height="60dp"
+    android:layout_width="60dp"
+    android:layout_gravity="center"
+    android:src="@drawable/keepegg" />
+
+</FrameLayout>

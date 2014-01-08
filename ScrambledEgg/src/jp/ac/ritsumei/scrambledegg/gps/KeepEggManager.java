@@ -3,6 +3,7 @@ package jp.ac.ritsumei.scrambledegg.gps;
 import java.util.List;
 
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
+import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg.EGG_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Team;
 import android.location.Location;
 
@@ -85,17 +86,18 @@ public class KeepEggManager{
 		for(int team = 0; team < enemyTeams.size(); team++) {
 			List<Egg> eggList = enemyTeams.get(team).getEggsList();
 			for(int i = 0; i < eggList.size(); i++) {
+				if(eggList.get(i).getCurrentEggState() == EGG_STATE.STAY) {
+					Location.distanceBetween(location.getLatitude(), location.getLatitude(), eggList.get(i).getLatitude(), eggList.get(i).getLongitude(), results);
 
-				Location.distanceBetween(location.getLatitude(), location.getLatitude(), eggList.get(i).getLatitude(), eggList.get(i).getLongitude(), results);
-
-				if(isFirst) {
-					egg = eggList.get(i);
-					distance = results[0];
-					isFirst = false;
-				} else {
-					if(distance > results[0]) {
+					if(isFirst) {
 						egg = eggList.get(i);
 						distance = results[0];
+						isFirst = false;
+					} else {
+						if(distance > results[0]) {
+							egg = eggList.get(i);
+							distance = results[0];
+						}
 					}
 				}
 			}

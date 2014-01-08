@@ -44,6 +44,7 @@
         <service android:name="GameInfoGetterService"></service>
         <activity android:name=".room.EntryRoomActivity"></activity>
         <activity android:name=".room.MakeRoomActivity"></activity>
+        <activity android:name=".room.ResultActivity"></activity>
         <activity android:name=".room.TitleActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

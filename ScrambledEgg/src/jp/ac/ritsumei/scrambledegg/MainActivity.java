@@ -1,10 +1,13 @@
 package jp.ac.ritsumei.scrambledegg;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import jp.ac.ritsumei.scrambledegg.gps.KeepEggManager;
 import jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager;
+import jp.ac.ritsumei.scrambledegg.room.EntryRoomActivity;
+import jp.ac.ritsumei.scrambledegg.room.TitleActivity;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg.EGG_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Player;
@@ -166,7 +169,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	private ImageView keepEggImg, limitCircle;
 	private int[] eggImgLocation, circleImgLocation, eggImgFirstLocation;
 
-
+    DecimalFormat df = new DecimalFormat("#.#");
+    
 	private  HttpClient httpClient  = new DefaultHttpClient();
 	private  HttpPost postRequest = new HttpPost(Constants.URI);
 
@@ -186,7 +190,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				if (v.getId() == R.id.setObjectButton) {
 					if(currentState == GAME_STATE.EGG_SET) {
 						if(countSetEggs < MAX_SET_EGGS) {
-							int eggId = countStayingEgg();
+							int eggId = countStayingEgg(0);
 							moveMarker(EGG, eggId, myLocation);
 							Log.e("log", "eggID:"+eggId+"pid:"+myInfo.getPlayerID()+" id,"+myTeam.getEggsList().get(eggId).getEggID());
 							new postJSONTask().execute(makeEggLocationInfo(myTeam.getEggsList().get(eggId).getEggID(), myLocation));
@@ -357,6 +361,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 				case END:
 					stopGPSService();
+					showResult();
 					break;
 				}
 				Log.i("client", myInfo.getJSONObject().toString());
@@ -802,6 +807,12 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	}
 
 	/**
+	 * 引き分け
+	 */
+	public void draw() {
+		
+	}
+	/**
 	 * GPSが位置情報を更新した時の処理
 	 */
 	@Override
@@ -868,30 +879,39 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * たまご探索中の処理
 			 */
 			if(!myInfo.getIsHaveEgg()) {
-				nearestEgg = myKeepEggManager.getNearestEgg(location, enemyTeams);
+				if((nearestEgg = myKeepEggManager.getNearestEgg(location, enemyTeams)) != null) {
 
-				float[] result = new float[3];
-				Location.distanceBetween(location.getLatitude(), location.getLongitude(), nearestEgg.getLatitude(), nearestEgg.getLongitude(), result);
+					float[] result = new float[3];
+					Location.distanceBetween(location.getLatitude(), location.getLongitude(), nearestEgg.getLatitude(), nearestEgg.getLongitude(), result);
 
-				String directionText = getDirectionString(result[1]);
+					String directionText = getDirectionString(result[1]);
 
-				directionTextView.setText(directionText);
-				distanceTextView.setText(String.format("%3f", result[0]) + "m");
 
-				myKeepEggManager.progressKeepEggBar(location, new LatLng(nearestEgg.getLatitude(), nearestEgg.getLongitude()));
-				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
-					isCanKeepEgg = true;
-					keepEggTextView.setText("YOU CAN GET AN EGG");
-					registerAccelerometer();
-				} else if((progress = myKeepEggManager.getProgress()) == 0) {
-					isCanKeepEgg = false;
-					keepEggTextView.setText("YOU ARE NOT NEAR EGGS");
-				}else{
-					isCanKeepEgg = false;
-					keepEggTextView.setText("YOU ARE NEAR AN EGG");
+					myKeepEggManager.progressKeepEggBar(location, new LatLng(nearestEgg.getLatitude(), nearestEgg.getLongitude()));
+					if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
+						isCanKeepEgg = true;
+						keepEggTextView.setText("YOU CAN GET AN EGG");
+						directionTextView.setText("-----");
+						distanceTextView.setText("-----");
+						registerAccelerometer();
+					} else if((progress = myKeepEggManager.getProgress()) == 0) {
+						isCanKeepEgg = false;
+						keepEggTextView.setText("YOU ARE NOT NEAR EGGS");
+						directionTextView.setText(directionText);
+						distanceTextView.setText(df.format(result[0]) + "m");
+					}else{
+						isCanKeepEgg = false;
+						keepEggTextView.setText("YOU ARE NEAR AN EGG");
+						directionTextView.setText("-----");
+						distanceTextView.setText("-----");
+					}
+					keepEggProgressBar.setProgress(progress);
+				} else {
+					keepEggTextView.setText("YOU ARE NOT NEAR AN EGG");
+					directionTextView.setText("-----");
+					distanceTextView.setText("-----");
 				}
-				keepEggProgressBar.setProgress(progress);
-
+			
 			} else {
 				if(myKeepEggManager.isNearGoal(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(myTeam.getBaseLatitude(), myTeam.getBaseLongitude()))) {
 					goalEgg();
@@ -904,6 +924,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * 結果画面
 			 */
 		case END:
+			
 			break;
 		}
 	}
@@ -1013,10 +1034,18 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	/**
 	 * 設置されているたまごの数を数える
+	 * teamIdが0のときmyTeam
+	 * 1のときenemyTeam
 	 */
-	public int countStayingEgg() {
+	public int countStayingEgg(int teamId) {
 		int count = 0;
-		List<Egg> eggList = myTeam.getEggsList();
+		Team team = null;
+		if(teamId == 0) {
+			team = myTeam;
+		} else if(teamId == 1){
+			team = enemyTeams.get(0);
+		}
+		List<Egg> eggList = team.getEggsList();
 		for(int i = 0; i < eggList.size(); i++) {
 			if(eggList.get(i).getCurrentEggState() == EGG_STATE.STAY) {
 				count++;
@@ -1025,6 +1054,15 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return count;
 	}
 
+	public void showResult() {
+		int myFinalEggs = countStayingEgg(0);
+		int enemyFinalEggs = countStayingEgg(1);
+
+		Intent intent = new Intent(getApplication(), EntryRoomActivity.class);
+		intent.putExtra("myFinalEggs", myFinalEggs);
+		intent.putExtra("enemyFinalEggs", enemyFinalEggs);
+		startActivity(intent);
+	}
 	//以下 getter setter
 	public List<Team> getEnemyTeams() {
 		return enemyTeams;
