@@ -8,7 +8,7 @@ import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class KeepEggManager {
+public class KeepEggManager{
 
 	private final double FIRST_DISTANCE_THRESH = 5.0;
 	private final double KEEP_DISTANCE_THRESH = 30.0;
@@ -61,6 +61,10 @@ public class KeepEggManager {
 				progress = 0;
 			}
 		}
+		
+		if(100 <= progress ){
+			progress = 100;
+		}
 	}
 
 	public LatLng getEggPosition(int id) {
@@ -104,6 +108,12 @@ public class KeepEggManager {
 		return progress;
 	}
 	
+	
+	
+	public void setProgress(int progress) {
+		this.progress = progress;
+	}
+
 	public boolean isNearGoal(LatLng myPosition, LatLng fryPanPosition) {
 		float[] result = new float[3];
 		Location.distanceBetween(myPosition.latitude, myPosition.longitude, fryPanPosition.latitude, fryPanPosition.longitude, result);

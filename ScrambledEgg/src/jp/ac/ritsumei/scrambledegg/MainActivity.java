@@ -166,14 +166,15 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	private ImageView keepEggImg, limitCircle;
 	private int[] eggImgLocation, circleImgLocation, eggImgFirstLocation;
 
+
+	private  HttpClient httpClient  = new DefaultHttpClient();
+	private  HttpPost postRequest = new HttpPost(Constants.URI);
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		receiver = new MyBroadcastReceiver();
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(Constants.GET_DATA);
-		registerReceiver(receiver, filter);
+
 
 		viewFlipper = (ViewFlipper) findViewById(R.id.flipper);
 		viewFlipper.setOnTouchListener(this);
@@ -191,8 +192,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 							new postJSONTask().execute(makeEggLocationInfo(myTeam.getEggsList().get(eggId).getEggID(), myLocation));
 							countSetEggs++;
 						}
-
-					} else if (currentState == GAME_STATE.POSITION_SET) {
+					}else if (currentState == GAME_STATE.POSITION_SET) {
 						new postJSONTask().execute(makeFryPanLocationInfo(myLocation));
 						Log.v("Marker","marker---" + myLocation.latitude + "," + myLocation.longitude);
 						moveMarker(FRY_PAN, 0, myLocation);
@@ -200,6 +200,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				}
 			}
 		});
+
 		gpsAccuracyTextView = (TextView)findViewById(R.id.gpsAccuracyText);
 
 		myKeepEggManager = new jp.ac.ritsumei.scrambledegg.gps.KeepEggManager();
@@ -220,18 +221,17 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		stateTextView = (TextView)findViewById(R.id.textView2);
 		accuracyTextView2 = (TextView)findViewById(R.id.textView3);
 
-		keepEggImg = (ImageView)findViewById(R.id.keepEggImg);
 		limitCircle = (ImageView)findViewById(R.id.limitCircle);
 		eggImgLocation = new int[2];
 		circleImgLocation = new int[2];
 		eggImgFirstLocation = new int[2];
-		circleImgLocation[0] = limitCircle.getLeft() + limitCircle.getWidth()/2;
-		circleImgLocation[1] = limitCircle.getTop() + limitCircle.getHeight()/2;
+
 		eggImgFirstLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
 		eggImgFirstLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
 
 		app = (ExtendApplication)getApplication();
 		makeRoom();
+		initSensor();
 	}
 
 
@@ -239,6 +239,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	@Override
 	protected void onResume(){
 		super.onResume();
+		receiver = new MyBroadcastReceiver();
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(Constants.GET_DATA);
+		registerReceiver(receiver, filter);
 		//TODO ルームIDを送信しておく必要がある
 		startService(new Intent(MainActivity.this, GameInfoGetterService.class));
 	}
@@ -266,7 +270,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			GAME_STATE lastState = currentState;
 
 			String gotData =  intent.getExtras().getString(Constants.DATA);
-			Log.e("jsondata", gotData);
+			//Log.e("jsondata", gotData);
 
 
 			if(gotData != null){
@@ -382,6 +386,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			for(int i = 0;i < teamArray.length();i++){
 
 				JSONObject team = teamArray.getJSONObject(i);
+
 				//自分のチーム情報更新
 				if(myInfo.getTeamID() == team.getInt("teamID")){
 					myTeam.setBaseLatitude(team.getDouble("latitude"));
@@ -428,6 +433,56 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 									egg.getDouble("latitude"),
 									egg.getDouble("longitude")));
 						}
+				
+					}else if(eggs.length() <= eList.size()){
+						//削除
+						List<Egg> deleteList = new ArrayList<Egg>();
+						
+						for(Egg e : eList){//現在のリスト
+							boolean match = false;
+
+							for(int j = 0;j < eggs.length();j++){//サーバのリスト
+								JSONObject egg = eggs.getJSONObject(j);
+								if(e.getEggID() == egg.getInt("eggID")){//matchしたら更新
+									e.setLatitude(egg.getDouble("latitude"));
+									e.setLongitude(egg.getDouble("longitude"));
+									e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+									match = true;
+									break;
+								}
+							}
+
+							if(!match){
+								deleteList.add(e);
+							}
+						}
+						
+						//delete 
+						for(int k=0 ; k<deleteList.size();k++){
+							eList.remove(deleteList.get(k));
+						}
+					}else if(eList.size() <= eggs.length()){
+
+						//追加
+						for(int j = 0;j < eggs.length();j++){//サーバのリスト
+							boolean match = false;
+							JSONObject egg = eggs.getJSONObject(j);
+
+							for(Egg e : eList){//現在のリスト
+								if(e.getEggID() == egg.getInt("eggID")){//matchしたら更新
+									e.setLatitude(egg.getDouble("latitude"));
+									e.setLongitude(egg.getDouble("longitude"));
+									e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+									match = true;
+									break;
+								}
+							}
+							if(!match){
+								Egg tmpEgg = new Egg(egg.getInt("eggID"), egg.getDouble("latitude"), egg.getDouble("longitude"));
+								tmpEgg.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+								eList.add(tmpEgg);
+							}
+						}
 					}else{
 						for(int j = 0; j < eggs.length(); j++){
 							JSONObject egg = eggs.getJSONObject(j);
@@ -440,10 +495,15 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 							}
 						}
 					}
+
+
+
+
 				}else{//相手チーム情報の更新
 
 					boolean ditectTeamflag=true;
 					for(Team t : enemyTeams){
+						//チームがあるかどうか
 						if(t.getTeamID() ==  team.getInt("teamID")){
 
 							//基地の更新
@@ -464,22 +524,75 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 								}
 							}//player
 
+
 							//Eggs List
 							JSONArray eggs = team.getJSONArray("eggsList");
-							for(int j = 0; j < eggs.length(); j++){
-								JSONObject egg = eggs.getJSONObject(j);
-								for(Egg e : t.getEggsList()){
-									if(e.getEggID() == egg.getInt("eggID")){
-										e.setLatitude(egg.getDouble("latitude"));
-										e.setLongitude(egg.getDouble("longitude"));
-										e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+							List<Egg> eList = t.getEggsList();
+
+							if(eggs.length() <= eList.size()){
+								//削除
+								List<Egg> deleteList = new ArrayList<Egg>();
+								for(Egg e : eList){//現在のリスト
+									boolean match = false;
+
+									for(int j = 0;j < eggs.length();j++){//サーバのリスト
+										JSONObject egg = eggs.getJSONObject(j);
+										if(e.getEggID() == egg.getInt("eggID")){//matchしたら更新
+											e.setLatitude(egg.getDouble("latitude"));
+											e.setLongitude(egg.getDouble("longitude"));
+											e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+											match = true;
+											break;
+										}
 									}
-								}//egg
+									if(!match){
+										deleteList.add(e);
+									}
+								}
+								
+								//delete 
+								for(int k=0 ; k<deleteList.size();k++){
+									eList.remove(deleteList.get(k));
+								}
+							}else if(eList.size() <= eggs.length()){
+								//追加
+								for(int j = 0;j < eggs.length();j++){//サーバのリスト
+									boolean match = false;
+									JSONObject egg = eggs.getJSONObject(j);
+
+									for(Egg e : t.getEggsList()){//現在のリスト
+										if(e.getEggID() == egg.getInt("eggID")){//matchしたら更新
+											e.setLatitude(egg.getDouble("latitude"));
+											e.setLongitude(egg.getDouble("longitude"));
+											e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+											match = true;
+											break;
+										}
+									}
+									if(!match){
+										Egg tmpEgg = new Egg(egg.getInt("eggID"), egg.getDouble("latitude"), egg.getDouble("longitude"));
+										tmpEgg.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+										eList.add(tmpEgg);
+									}
+								}
+							}else{
+								for(int j = 0; j < eggs.length(); j++){
+									JSONObject egg = eggs.getJSONObject(j);
+									for(Egg e : t.getEggsList()){
+										if(e.getEggID() == egg.getInt("eggID")){
+											e.setLatitude(egg.getDouble("latitude"));
+											e.setLongitude(egg.getDouble("longitude"));
+											e.setCurrentEggState(EGG_STATE.valueOf(egg.getString("state")));
+										}
+									}//egg
+								}
 							}
+							
 							ditectTeamflag = false;
 						}//teamID
 					}
-					if(ditectTeamflag){
+
+					if(ditectTeamflag){//チームが追加されてない時
 						Team t = new Team("グループ"+team.getInt("teamID"), team.getInt("teamID"));
 						//基地の更新
 						t.setBaseLatitude(team.getDouble("latitude"));
@@ -518,11 +631,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 * 送りたいJSONを作り、渡す
 	 */
 	private class postJSONTask extends AsyncTask<JSONObject, Integer, Integer> {
+
 		@Override
 		protected Integer doInBackground(JSONObject... contents) {
 
-			HttpClient httpClient  = new DefaultHttpClient();
-			HttpPost postRequest = new HttpPost(Constants.URI);
 
 			ArrayList <NameValuePair> params = new ArrayList <NameValuePair>();
 			params.add( new BasicNameValuePair("params", contents[0].toString()));
@@ -539,7 +651,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				Log.d("HttpSampleActivity", "Error Execute");
 			}
 
-			httpClient.getConnectionManager().shutdown();
+			//			httpClient.getConnectionManager().shutdown();
 			return 1;
 		}
 	}
@@ -568,7 +680,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return info;
 	}
 
-	//TODO サーバー
 	/**
 	 * サーバに送るたまご情報をJSONにする
 	 * @return
@@ -592,7 +703,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return info;
 	}
 
-	//TODO サーバー
+
 	/**
 	 * サーバに送るフライパン情報をJSONにする
 	 * @return
@@ -615,7 +726,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		return info;
 	}
 
-	//TODO サーバー
 	/**
 	 * サーバに送るたまご保持情報をJSONにする
 	 * @return
@@ -635,9 +745,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			//更新したいデータの位置
 			info.put("roomID", roomID);
 			info.put("eggID", nearestEgg.getEggID());
-			info.put("teamID", myTeam.getTeamID());
+			info.put("teamID", nearestEgg.getTeamID());
+			info.put("myTeamID", myTeam.getTeamID());
+
 			info.put("eggLat", nearestEgg.getLatitude());
 			info.put("eggLng", nearestEgg.getLongitude());
+
+			Log.e("egg","EGG_"+state);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -648,7 +762,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 * チーム分け
 	 */
 	public void makeRoom() {
-		//TODO 今は仮の設定で、これを事前に決めておかないときちんと更新できないし、ルーム作成で作る
 		/**
 		 * Roomの中に、Teamがあって、Teamの中にPlayerのリストとEggのリストがある
 		 */
@@ -659,20 +772,6 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		enemyTeams = new ArrayList<Team>();
 		myTeam = new Team("team"+app.getTeamID(),app.getTeamID());
-
-		//
-		//		myTeam.addPlayerList(myInfo);
-		//		myTeam.addPlayerList(new Player("p2", 2, 35,135));
-		//		myTeam.addEggList(new Egg(1,35,135));
-		//		myTeam.addEggList(new Egg(2,35,135));
-		//
-		//
-		//		Team team2 = new Team("team1",2);
-		//		team2.addPlayerList(new Player("p3",3,35,135));
-		//		team2.addPlayerList(new Player("p4", 4, 35,135));
-		//		team2.addEggList(new Egg(3,35,135));
-		//		team2.addEggList(new Egg(4,35,135));
-		//		enemyTeams.add(team2);
 
 		numberOfTeams = app.getTeamNum();
 		numberOfEggs = app.getPlayerNum();
@@ -777,7 +876,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				String directionText = getDirectionString(result[1]);
 
 				directionTextView.setText(directionText);
-				distanceTextView.setText(String.format("%3d", result[0]) + "m");
+				distanceTextView.setText(String.format("%3f", result[0]) + "m");
 
 				myKeepEggManager.progressKeepEggBar(location, new LatLng(nearestEgg.getLatitude(), nearestEgg.getLongitude()));
 				if((progress = myKeepEggManager.getProgress()) == MAX_PROGRESS) {
@@ -811,17 +910,22 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 
 	public void keepEgg() {
-		Log.v("KeepEgg", "keep egg");
+		Log.v("Egg", "keep egg");
 		myInfo.setIsHaveEgg(true);
 		isCanKeepEgg = false;
 		eggImgLocation[0] = eggImgFirstLocation[0];
 		eggImgLocation[1] = eggImgFirstLocation[1];
+
+
 		viewFlipper.showNext();
+		myKeepEggManager.setProgress(0);
+
 		//サーバにたまご保持通知
 		new postJSONTask().execute(makeEggInfo("KEEP"));
 	}
 
 	public void breakEgg() {
+		Log.v("Egg", "Break egg" +"lat:"+circleImgLocation[0]+" lng: "+circleImgLocation[1]);
 		myInfo.setIsHaveEgg(false);
 		viewFlipper.showPrevious();
 		unregisterAccelerometer();
@@ -830,6 +934,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	}
 
 	public void goalEgg() {
+		Log.v("Egg", "Goal egg");
 		myInfo.setIsHaveEgg(false);
 		viewFlipper.showPrevious();
 		unregisterAccelerometer();
@@ -963,7 +1068,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 */
 	private void checkMotion(float z){
 
-		Log.v("CheckMotion", "acc[2]:" + z);
+		//Log.v("CheckMotion", "acc[2]:" + z);
 		if(z < -5) keepEgg();
 	}
 
@@ -971,14 +1076,21 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 * たまご画像位置更新
 	 */
 	private void replaceEggImg(float x, float y){
-		keepEggImg.layout(keepEggImg.getLeft()-(int)x*5, keepEggImg.getTop()+(int)y*5, keepEggImg.getWidth(), keepEggImg.getHeight());
+		keepEggImg.layout(keepEggImg.getLeft()-(int)x*3, keepEggImg.getTop()+(int)y*3
+				, keepEggImg.getLeft()+ keepEggImg.getWidth()-(int)x*3, keepEggImg.getTop()+keepEggImg.getHeight()+(int)y*3);
+
 		eggImgLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
 		eggImgLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
 
+		circleImgLocation[0] = limitCircle.getLeft() + limitCircle.getWidth()/2;
+		circleImgLocation[1] = limitCircle.getTop() + limitCircle.getHeight()/2;
+
+		//		Log.v("Egg", "get:"+keepEggImg.getWidth() +","+keepEggImg.getHeight());
+		//		Log.v("Egg","log image"+eggImgLocation[0]+", "+eggImgLocation[1]+",circle "+circleImgLocation[0]+"."+circleImgLocation[1]);
 		//たまごの中心からのずれ計算、損失判定
 		double dx = Math.pow((double)eggImgLocation[0]-(double)circleImgLocation[0],2.0);
 		double dy = Math.pow((double)eggImgLocation[1]-(double)circleImgLocation[1],2.0);
-		if(Math.sqrt(dx+dy) > limitCircle.getWidth()/2) breakEgg();
+		if(Math.sqrt(dx+dy) > limitCircle.getWidth()/2) breakEgg();	
 	}
 
 	/**
@@ -1013,7 +1125,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-			Log.v("OnSensorChanged", "get acc");
+			//Log.v("OnSensorChanged", "get acc");
 			if(isCanKeepEgg) checkMotion(event.values[2]);
 			else if(myInfo.getIsHaveEgg()) replaceEggImg(event.values[0],event.values[1]);
 		}
@@ -1026,22 +1138,22 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		sensorManager.unregisterListener(this);
 	}
 
-//	protected boolean checkStateUpDate(GAME_STATE gameState){
-//
-//		switch (gameState) {
-//		case LISTEN:
-//			break;
-//		case TEAM_SET:
-//			break;
-//		case POSITION_SET:
-//			break;
-//		case EGG_SET:
-//			break;
-//		case END:
-//			break;
-//		case START:
-//			break;
-//		}
-//		return true;
-//	}
+	//	protected boolean checkStateUpDate(GAME_STATE gameState){
+	//
+	//		switch (gameState) {
+	//		case LISTEN:
+	//			break;
+	//		case TEAM_SET:
+	//			break;
+	//		case POSITION_SET:
+	//			break;
+	//		case EGG_SET:
+	//			break;
+	//		case END:
+	//			break;
+	//		case START:
+	//			break;
+	//		}
+	//		return true;
+	//	}
 }

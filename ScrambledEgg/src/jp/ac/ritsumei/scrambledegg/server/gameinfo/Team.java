@@ -22,7 +22,7 @@ public class Team {
 		this.teamName = teamName;
 		this.teamID = teamID;
 		playersList = new ArrayList<Player>();
-		eggsList = new ArrayList<Egg>();
+		eggsList = java.util.Collections.synchronizedList(( new ArrayList<Egg>()));
 	}
 
 	public void addPlayerList(Player p){
