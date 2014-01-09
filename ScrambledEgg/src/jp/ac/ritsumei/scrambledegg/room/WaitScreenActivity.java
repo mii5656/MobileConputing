@@ -100,6 +100,18 @@ public class WaitScreenActivity extends Activity{
 	 */
 	private class postJSONTask extends AsyncTask<JSONObject, Integer, Integer> {
 		
+		/* (non-Javadoc)
+		 * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
+		 */
+		@Override
+		protected void onPostExecute(Integer result) {
+			super.onPostExecute(result);
+			
+			playerIDtext.setText(String.valueOf(app.getPlayerID()));
+			teamIDtext.setText(String.valueOf(app.getTeamID()));
+		}
+		
+		
 		@Override
 		protected Integer doInBackground(JSONObject... contents) {
 
@@ -119,9 +131,7 @@ public class WaitScreenActivity extends Activity{
 				Log.e("wait", result.toString()+":roomID "+ roomID);
 				if(result.getBoolean("result")){
 					app.setPlayerID(result.getInt("playerID"));
-					playerIDtext.setText(String.valueOf(app.getPlayerID()));
 					app.setTeamID(result.getInt("teamID"));
-					teamIDtext.setText(String.valueOf(app.getTeamID()));
 				}else{
 					Intent intent = new Intent(app, EntryRoomActivity.class);
 					startActivity(intent);
