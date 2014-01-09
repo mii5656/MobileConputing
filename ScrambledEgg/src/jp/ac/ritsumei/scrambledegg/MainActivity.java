@@ -6,8 +6,7 @@ import java.util.List;
 
 import jp.ac.ritsumei.scrambledegg.gps.KeepEggManager;
 import jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager;
-import jp.ac.ritsumei.scrambledegg.room.EntryRoomActivity;
-import jp.ac.ritsumei.scrambledegg.room.TitleActivity;
+import jp.ac.ritsumei.scrambledegg.room.ResultActivity;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Egg.EGG_STATE;
 import jp.ac.ritsumei.scrambledegg.server.gameinfo.Player;
@@ -48,7 +47,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -171,16 +169,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	private ImageView keepEggImg, limitCircle;
 	private int[] eggImgLocation, circleImgLocation, eggImgFirstLocation;
-	
+
 	/**
 	 * アラート画像
 	 */
 	private ImageView brokenEggImg, gotEggImg;
 
-    DecimalFormat df = new DecimalFormat("#.#");
-    
-	private  HttpClient httpClient  = new DefaultHttpClient();
-	private  HttpPost postRequest = new HttpPost(Constants.URI);
+	DecimalFormat df = new DecimalFormat("#.#");
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -240,13 +235,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		eggImgFirstLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
 		eggImgFirstLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
-		
+
 		//TODO 正しい画像に変える
 		brokenEggImg = new ImageView(this);
-		brokenEggImg.setImageResource(R.drawable.keepegg);
+		brokenEggImg.setImageResource(R.drawable.lost);
 		//TODO 正しい画像に変える
 		gotEggImg = new ImageView(this);
-		gotEggImg.setImageResource(R.drawable.keepegg);
+		gotEggImg.setImageResource(R.drawable.get);
 
 		app = (ExtendApplication)getApplication();
 		makeRoom();
@@ -453,11 +448,11 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 									egg.getDouble("latitude"),
 									egg.getDouble("longitude")));
 						}
-				
+
 					}else if(eggs.length() <= eList.size()){
 						//削除
 						List<Egg> deleteList = new ArrayList<Egg>();
-						
+
 						for(Egg e : eList){//現在のリスト
 							boolean match = false;
 
@@ -476,7 +471,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 								deleteList.add(e);
 							}
 						}
-						
+
 						//delete 
 						for(int k=0 ; k<deleteList.size();k++){
 							eList.remove(deleteList.get(k));
@@ -569,7 +564,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 										deleteList.add(e);
 									}
 								}
-								
+
 								//delete 
 								for(int k=0 ; k<deleteList.size();k++){
 									eList.remove(deleteList.get(k));
@@ -607,7 +602,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 									}//egg
 								}
 							}
-							
+
 							ditectTeamflag = false;
 						}//teamID
 					}
@@ -654,7 +649,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		@Override
 		protected Integer doInBackground(JSONObject... contents) {
-
+			HttpClient httpClient  = new DefaultHttpClient();
+			HttpPost postRequest = new HttpPost(Constants.URI);
 
 			ArrayList <NameValuePair> params = new ArrayList <NameValuePair>();
 			params.add( new BasicNameValuePair("params", contents[0].toString()));
@@ -670,8 +666,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 				e.printStackTrace();
 				Log.d("HttpSampleActivity", "Error Execute");
 			}
-
-			//			httpClient.getConnectionManager().shutdown();
+			
+			httpClient.getConnectionManager().shutdown();
 			return 1;
 		}
 	}
@@ -825,7 +821,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 	 * 引き分け
 	 */
 	public void draw() {
-		
+
 	}
 	/**
 	 * GPSが位置情報を更新した時の処理
@@ -926,10 +922,10 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 					directionTextView.setText("-----");
 					distanceTextView.setText("-----");
 				}
-			
+
 			} else {
 				if(myKeepEggManager.isNearGoal(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(myTeam.getBaseLatitude(), myTeam.getBaseLongitude()))) {
-					goalEgg();
+					gotEgg();
 				}
 			}
 
@@ -939,7 +935,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 			 * 結果画面
 			 */
 		case END:
-			
+
 			break;
 		}
 	}
@@ -958,9 +954,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		//サーバにたまご保持通知
 		new postJSONTask().execute(makeEggInfo("KEEP"));
-		
+
 		//画面にトースト表示
-		Toast.makeText(this, "!!たまご保持中!!", Toast.LENGTH_LONG).show();
+		//Toast.makeText(this, "!!たまご保持中!!", Toast.LENGTH_LONG).show();
 	}
 
 	public void breakEgg() {
@@ -970,7 +966,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		unregisterAccelerometer();
 		//サーバにたまご損失通知
 		new postJSONTask().execute(makeEggInfo("BREAK"));
-		
+
 		//たまご消失アラート表示
 		new AlertDialog.Builder(MainActivity.this)
 		.setTitle("消失")
@@ -984,25 +980,25 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		.show();
 	}
 
-	public void goalEgg() {
+	public void gotEgg() {
 		Log.v("Egg", "Goal egg");
 		myInfo.setIsHaveEgg(false);
 		viewFlipper.showPrevious();
 		unregisterAccelerometer();
 		//サーバにたまご獲得通知
 		new postJSONTask().execute(makeEggInfo("GET"));
-		
+
 		//たまご獲得アラート表示
-		new AlertDialog.Builder(MainActivity.this)
-		.setTitle("獲得")
-		.setView(gotEggImg)
-		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				// TODO Auto-generated method stub
-			}
-		})
-		.show();
+//		new AlertDialog.Builder(MainActivity.this)
+//		.setTitle("獲得")
+//		.setView(gotEggImg)
+//		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//			@Override
+//			public void onClick(DialogInterface dialog, int which) {
+//				// TODO Auto-generated method stub
+//			}
+//		})
+//		.show();
 	}
 
 	public String getDirectionString(double direction) {
@@ -1100,17 +1096,17 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		int myFinalEggs = countStayingEgg(0);
 		int enemyFinalEggs = countStayingEgg(1);
 
-		Intent intent = new Intent(getApplication(), EntryRoomActivity.class);
+		Intent intent = new Intent(getApplication(), ResultActivity.class);
 		intent.putExtra("myFinalEggs", myFinalEggs);
 		intent.putExtra("enemyFinalEggs", enemyFinalEggs);
 		startActivity(intent);
 	}
+	
+	
 	//以下 getter setter
 	public List<Team> getEnemyTeams() {
 		return enemyTeams;
 	}
-
-
 
 	public void setEnemyTeams(List<Team> enemyTeams) {
 		this.enemyTeams = enemyTeams;
