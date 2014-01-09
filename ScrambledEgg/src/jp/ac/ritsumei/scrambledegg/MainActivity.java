@@ -26,8 +26,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Sensor;
@@ -46,8 +48,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
+import com.example.scrambleegg.EggKeepActivity;
+import com.example.scrambleegg.MainActivity;
+import com.example.scrambleegg.R;
 import com.google.android.gms.maps.model.LatLng;
 
 public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener, SensorEventListener{
@@ -168,6 +174,11 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 	private ImageView keepEggImg, limitCircle;
 	private int[] eggImgLocation, circleImgLocation, eggImgFirstLocation;
+	
+	/**
+	 * アラート画像
+	 */
+	private ImageView brokenEggImg, gotEggImg;
 
     DecimalFormat df = new DecimalFormat("#.#");
     
@@ -232,6 +243,13 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		eggImgFirstLocation[0] = keepEggImg.getLeft() + keepEggImg.getWidth()/2;
 		eggImgFirstLocation[1] = keepEggImg.getTop() + keepEggImg.getHeight()/2;
+		
+		//TODO 正しい画像に変える
+		brokenEggImg = new ImageView(this);
+		brokenEggImg.setImageResource(R.drawable.keepegg);
+		//TODO 正しい画像に変える
+		gotEggImg = new ImageView(this);
+		gotEggImg.setImageResource(R.drawable.keepegg);
 
 		app = (ExtendApplication)getApplication();
 		makeRoom();
@@ -943,6 +961,9 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 
 		//サーバにたまご保持通知
 		new postJSONTask().execute(makeEggInfo("KEEP"));
+		
+		//画面にトースト表示
+		Toast.makeText(this, "!!たまご保持中!!", Toast.LENGTH_LONG).show();
 	}
 
 	public void breakEgg() {
@@ -952,6 +973,18 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		unregisterAccelerometer();
 		//サーバにたまご損失通知
 		new postJSONTask().execute(makeEggInfo("BREAK"));
+		
+		//たまご消失アラート表示
+		new AlertDialog.Builder(MainActivity.this)
+		.setTitle("消失")
+		.setView(brokenEggImg)
+		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+			}
+		})
+		.show();
 	}
 
 	public void goalEgg() {
@@ -961,6 +994,18 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		unregisterAccelerometer();
 		//サーバにたまご獲得通知
 		new postJSONTask().execute(makeEggInfo("GET"));
+		
+		//たまご獲得アラート表示
+		new AlertDialog.Builder(MainActivity.this)
+		.setTitle("獲得")
+		.setView(gotEggImg)
+		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+			}
+		})
+		.show();
 	}
 
 	public String getDirectionString(double direction) {
