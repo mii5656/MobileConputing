@@ -13,7 +13,7 @@ public class KeepEggManager{
 
 	private final double FIRST_DISTANCE_THRESH = 5.0;
 	private final double KEEP_DISTANCE_THRESH = 30.0;
-	private final double GOAL_DIRECTION_THRESH = 10.0;
+	private final double GOAL_DIRECTION_THRESH = 20.0;
 	private int progress = 0;
 	private boolean isKeepNearEgg = false;
 

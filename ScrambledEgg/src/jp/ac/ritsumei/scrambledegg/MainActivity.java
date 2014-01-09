@@ -186,7 +186,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		viewFlipper = (ViewFlipper) findViewById(R.id.flipper);
 		viewFlipper.setOnTouchListener(this);
 
-		mySettingObjectManager = new jp.ac.ritsumei.scrambledegg.gps.SettingtObjectManager();
+		mySettingObjectManager = new SettingtObjectManager();
 		setObjectButton = (Button)findViewById(R.id.setObjectButton);
 		setObjectButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -342,7 +342,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 						if(member != myInfo) {
 							moveMarker(myTeam.getTeamID(), i, new LatLng(member.getLatitude(), member.getLongitude()));
 						} else {
-							i--;
+							//i--;
 						}
 					}
 
@@ -357,7 +357,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 							Team enemyTeam = enemyTeams.get(team);
 							for(int i = 0; i < enemyTeam.getPlayersList().size() ; i++){
 								Player member = enemyTeam.getPlayersList().get(i);
-								moveMarker(myTeam.getTeamID() + TEAM_A, member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
+								moveMarker(enemyTeam.getTeamID() + TEAM_A, member.getPlayerID(), new LatLng(member.getLatitude(), member.getLongitude()));
 							}
 						}
 						isLastHaveEgg = true;
@@ -790,7 +790,7 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		myTeam = new Team("team"+app.getTeamID(),app.getTeamID());
 
 		numberOfTeams = app.getTeamNum();
-		numberOfEggs = app.getPlayerNum();
+		numberOfEggs = app.getPlayerNum() * 2;
 
 		createAllMarkers(numberOfEggs, numberOfTeams);
 
@@ -964,6 +964,8 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		myInfo.setIsHaveEgg(false);
 		viewFlipper.showPrevious();
 		unregisterAccelerometer();
+
+		keepEggProgressBar.setProgress(0);
 		//サーバにたまご損失通知
 		new postJSONTask().execute(makeEggInfo("BREAK"));
 

@@ -152,7 +152,7 @@ public class MapActivity extends FragmentActivity implements LocationListener{
 		createEggMarkers(numberOfEggs);
 
 		for(int i = 0; i < numberOfTeams; i++) {
-			createTeamMarkers(i, getNumberOfMenbers(i) + TEAM_A);
+			createTeamMarkers(i + TEAM_A, numberOfEggs / 2);
 		}
 	}
 
@@ -172,7 +172,7 @@ public class MapActivity extends FragmentActivity implements LocationListener{
 	protected void createMarker(int kind, int id) {
 		MarkerOptions options = new MarkerOptions();
 		options.icon(setIcon(kind));
-		options.position(new LatLng(34.979561, 135.964429));
+		options.position(new LatLng(0, 0));
 		options.visible(false);
 
 		Marker marker = map.addMarker(options);
