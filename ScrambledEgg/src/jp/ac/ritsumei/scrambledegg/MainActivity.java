@@ -51,9 +51,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
-import com.example.scrambleegg.EggKeepActivity;
-import com.example.scrambleegg.MainActivity;
-import com.example.scrambleegg.R;
 import com.google.android.gms.maps.model.LatLng;
 
 public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity implements OnTouchListener, SensorEventListener{
