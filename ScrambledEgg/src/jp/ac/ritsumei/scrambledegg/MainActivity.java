@@ -991,16 +991,16 @@ public class MainActivity extends jp.ac.ritsumei.scrambledegg.maps.MapActivity i
 		new postJSONTask().execute(makeEggInfo("GET"));
 
 		//たまご獲得アラート表示
-//		new AlertDialog.Builder(MainActivity.this)
-//		.setTitle("獲得")
-//		.setView(gotEggImg)
-//		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//			@Override
-//			public void onClick(DialogInterface dialog, int which) {
-//				// TODO Auto-generated method stub
-//			}
-//		})
-//		.show();
+		new AlertDialog.Builder(MainActivity.this)
+		.setTitle("獲得")
+		.setView(gotEggImg)
+		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+			}
+		})
+		.show();
 	}
 
 	public String getDirectionString(double direction) {
